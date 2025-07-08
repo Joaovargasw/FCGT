@@ -269,10 +269,7 @@ float alien_pos_z = 0.0f; // posição no eixo Z
      float distancia_frente = 2.0f;
      float distancia_frente_camera = 5.0f; 
      //parede
- float limiteX = 20.0f / 2.0f; // 10.0f
-float limiteZ = 20.0f / 2.0f; // 10.0f
-float alturaParede = 3.0f;
-float espessuraParede = 0.2f;
+
 float bunnyRaio = 2.3f; // esse raio é para o tiro
 
 // ESSES raios são para a colisão entre batman e bunny
@@ -286,10 +283,10 @@ float bunny_pos_z = 0.0f;    // posição inicial Z
 std::vector<Tiro> tiros;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 float tempoUltimoTeleport = 0.0f;  // para controle do tempo
-float distanciaAtual = 15.0f;      // distância inicial grande
+float distanciaAtual = 20.0f;      // distância inicial grande
 float tempoDesdeUltimoTeleporte = 0.0f;
 const float intervaloTeleporte = 2.5f; // 3 segundos
-float distanciaInicial = 15.0f;  // distância inicial longe do Batman
+float distanciaInicial = 150.0f;  // distância inicial longe do Batman a cada teletransporte diminuo a distancia do batman
 
 const float distanciaReduzidaPorTeleport = 1.0f; // Quanto diminui a cada teleporte
 
@@ -431,6 +428,7 @@ int main(int argc, char* argv[])
     Alvo alvoBunny = {bunny_pos_x, bunny_pos_y, bunny_pos_z, raioBunny};
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     float ultimoTempo = (float)glfwGetTime();
+    PosicionarBunnyDistante(batman_pos_x, batman_pos_z, distanciaAtual);
     while (!glfwWindowShouldClose(window)) //################################################################################################################################
     {
   
