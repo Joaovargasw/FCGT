@@ -48,11 +48,13 @@
 #include "utils.h"
 #include "matrices.h"
 
-   #define SPHERE 0
+        #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
         #define BAT     3
         #define PLANEC  4
+        #define ALIEN   5
+        #define WALL_ID   6
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -253,9 +255,19 @@ float batman_angulo = 0.0f;
      float batman_pos_y = 0.0f;
      bool keyW = false, keyA = false, keyS = false, keyD = false;
      float tiro_offset_y = 0.2f;
+     float alien_pos_x = 0.0f; // posição inicial do alien no eixo X
+float alien_pos_y = 0.0f; // posição Y, altura do alien (ajuste conforme necessário)
+float alien_pos_z = 0.0f; // posição no eixo Z
      
-     
-     
+     float distancia_frente = 2.0f;
+     float distancia_frente_camera = 5.0f; 
+     //parede
+ float limiteX = 20.0f / 2.0f; // 10.0f
+float limiteZ = 20.0f / 2.0f; // 10.0f
+float alturaParede = 3.0f;
+float espessuraParede = 0.2f;
+
+
 int main(int argc, char* argv[])
 {
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -334,9 +346,15 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/bat.jpg");      // TextureImage0
     LoadTextureImage("../../data/planec.jpg"); // TextureImage1
+    LoadTextureImage("../../data/alien.jpg"); // TextureImage1
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulo******************************************
+    
+    ObjModel bunnymodel("../../data/bunny.obj");
+    ComputeNormals(&bunnymodel);
+    BuildTrianglesAndAddToVirtualScene(&bunnymodel);
+    
     ObjModel batmodel("../../data/bat.obj");
     ComputeNormals(&batmodel);
     BuildTrianglesAndAddToVirtualScene(&batmodel);
@@ -348,6 +366,10 @@ int main(int argc, char* argv[])
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
+    
+  ObjModel alienModel("../../data/alien.obj");
+   ComputeNormals(&alienModel);
+  BuildTrianglesAndAddToVirtualScene(&alienModel);
 
     if ( argc > 1 )
     {
@@ -386,7 +408,7 @@ int main(int argc, char* argv[])
 glfwSetCursorPosCallback(window, CursorPosCallback);
 
 
-
+glUniform1i(g_object_id_uniform, WALL_ID);
 // Declara só uma vez:
 float velocidade = 0.1f;
 float angulo_rad = glm::radians(batman_angulo + 90.0f);
@@ -491,6 +513,10 @@ glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camer
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 //###############################################################################################################
 
+
+                    
+
+
 for (auto& tiro : tiros) {
     if (!tiro.ativo) continue;
 
@@ -507,8 +533,15 @@ for (auto& tiro : tiros) {
     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
     glUniform1i(g_object_id_uniform, SPHERE);
     DrawVirtualObject("the_sphere");
-}
+}      //bunny
+       model = Matrix_Translate(1.0f,-1.0f,0.0f)
+              * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f)
+              * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
+        DrawVirtualObject("the_bunny");
 
+        //BATMAN
          model = Matrix_Translate(batman_pos_x, -1.8f, batman_pos_z)
         *Matrix_Rotate_Y(glm::radians(batman_angulo)) 
         * Matrix_Scale(0.2f, 0.2f, 0.2f);
@@ -516,12 +549,29 @@ for (auto& tiro : tiros) {
         glUniform1i(g_object_id_uniform, BAT);
         DrawVirtualObject("bat");
         
+        //PLANO
         model = Matrix_Translate(0.0f, -3.0f, 0.0f)
       * Matrix_Scale(20.0f, 1.0f, 20.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
          glUniform1i(g_object_id_uniform, PLANEC); // Usa o ID correto para o chão
          DrawVirtualObject("Plane_Material");
-        
+        alien_pos_x = batman_pos_x + dx * distancia_frente;
+
+
+
+        //ALIEN
+        float altura_do_alien_metade = 1.0f; // Ajusta conforme a escala do alien
+
+     alien_pos_x = batman_pos_x + dx * distancia_frente;
+     alien_pos_y = -3.0f + altura_do_alien_metade;
+     alien_pos_z = batman_pos_z + dz * distancia_frente;
+     glm::mat4 modelAlien = Matrix_Translate(alien_pos_x, alien_pos_y, alien_pos_z)
+                    * Matrix_Scale(0.5f, 0.5f, 0.5f);
+     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(modelAlien));
+     glUniform1i(g_object_id_uniform, ALIEN);
+     DrawVirtualObject("alien");
+
+
     
         
         

@@ -24,6 +24,7 @@ uniform mat4 projection;
 #define PLANE  2
 #define BAT    3
 #define PLANEC 4
+#define ALIEN  5
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -124,9 +125,6 @@ void main()
   
    vec3 Kd0;
 
-  /*if (object_id == BAT) {
-    Kd0 = texture(TextureImage0, vec2(U,V)).rgb; // Batman
-   }*/
 if (object_id == BAT) {
     U = texcoords.x;
     V = texcoords.y;
@@ -135,7 +133,6 @@ if (object_id == BAT) {
     return;
 }
 
-
   if (object_id == PLANEC) {
     U = texcoords.x;
     V = texcoords.y;
@@ -143,7 +140,14 @@ if (object_id == BAT) {
     color.rgb = planec_color;
     color.a = 1.0;
     return;
+} if (object_id == ALIEN) {
+    U = texcoords.x;
+    V = texcoords.y;
+    color.rgb = texture(TextureImage2, vec2(U, V)).rgb; // textura do alien carregada na unidade 2
+    color.a = 1.0;
+    return;
 }
+
    else {
     Kd0 = vec3(0.7, 0.7, 0.7); // cor neutra se faltar textura
    }
