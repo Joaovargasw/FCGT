@@ -12,6 +12,17 @@ bool ColisaoEsferica(const Tiro& tiro, const Alvo& alvo)
     float somaRaios2 = somaRaios * somaRaios;
     return distancia2 <= somaRaios2;
 }
+//##################################bat e colho
+bool ColisaoEsfericaAlvo(const Alvo& alvo1, const Alvo& alvo2) {
+    float dx = alvo1.x - alvo2.x;
+    float dy = alvo1.y - alvo2.y;
+    float dz = alvo1.z - alvo2.z;
+
+    float distancia2 = dx*dx + dy*dy + dz*dz;
+    float raioSoma = alvo1.raio + alvo2.raio;
+
+    return distancia2 <= (raioSoma * raioSoma);
+}
 
 // Função para colisão entre esfera e cubo (bounding box) já definida em seu header (caso queira usar)
 bool sphereIntersectsCube(glm::vec4 sphereCenter, float sphereRadius, glm::vec4 cubeCenter, float cubeSize)

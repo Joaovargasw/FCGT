@@ -35,6 +35,8 @@ bool sphereIntersectsCube(glm::vec4 sphereCenter, float sphereRadius, glm::vec4 
 
 // Função para detectar colisão entre duas bounding boxes
 bool caixasColidem(const BoundingBox& box1, const BoundingBox& box2);
+bool ColisaoEsfericaAlvo(const Alvo& alvo1, const Alvo& alvo2);
+
 
 #endif // COLISIONS_H
 
