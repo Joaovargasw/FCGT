@@ -47,6 +47,8 @@
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+#include "colisions.h"
+
 
         #define SPHERE 0
         #define BUNNY  1
@@ -239,7 +241,7 @@ GLint g_bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 // No início
-struct Tiro {
+/*struct Tiro {
     float x, y, z;    // posição atual do tiro
     float dx, dz;     // direção do tiro (normalizado)
     float speed;      // velocidade do tiro
@@ -247,6 +249,8 @@ struct Tiro {
     bool ativo;       // se está ativo ou não
 };
 std::vector<Tiro> tiros; // lista de tiros ativos
+*/
+
 double last_mouse_x = 0.0;  // Última posição do mouse X
 bool first_mouse = true; 
 float batman_angulo = 0.0f; 
@@ -266,7 +270,12 @@ float alien_pos_z = 0.0f; // posição no eixo Z
 float limiteZ = 20.0f / 2.0f; // 10.0f
 float alturaParede = 3.0f;
 float espessuraParede = 0.2f;
-
+float bunnyRaio = 2.3f; // ajuste conforme o tamanho do modelo do bunny
+Alvo alvoBunny;
+float bunny_pos_x = 0.0f;    // posição inicial X
+float bunny_pos_y = -1.8f;   // altura do chão no seu cenário, como o batman
+float bunny_pos_z = 0.0f;    // posição inicial Z
+std::vector<Tiro> tiros;
 
 int main(int argc, char* argv[])
 {
@@ -402,8 +411,11 @@ int main(int argc, char* argv[])
         //
         //           R     G     B     A
         glClearColor(0.09f, 0.19f, 0.45f, 1.0f);//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-        // Atualiza e desenha tiros
-// Atualiza e desenha tiros
+        alvoBunny.x = bunny_pos_x;
+        alvoBunny.y = bunny_pos_y;
+        alvoBunny.z = bunny_pos_z;
+        alvoBunny.raio = bunnyRaio;
+
 
 glfwSetCursorPosCallback(window, CursorPosCallback);
 
@@ -517,23 +529,48 @@ glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camer
                     
 
 
+// Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas
+// E que 'tiro' tenha campos x,y,z, dx,dz, speed, tempoVivo e ativo
+
 for (auto& tiro : tiros) {
     if (!tiro.ativo) continue;
 
+    // Atualiza posição do tiro
     tiro.x += tiro.dx * tiro.speed;
     tiro.z -= tiro.dz * tiro.speed;
     tiro.tempoVivo += 0.016f; // tempo aproximado de um frame (ajuste conforme FPS)
 
+    // Verifica se tiro passou do tempo máximo
     if (tiro.tempoVivo > 10.0f) {
         tiro.ativo = false;
         continue;
     }
 
-    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(0.2f, 0.2f, 0.2); // escala menor se 2.4 for grande demais
+    // Centros do tiro e do alvo (bunny)
+    glm::vec4 centroTiro = glm::vec4(tiro.x, tiro.y, tiro.z, 1.0f);
+    glm::vec4 centroAlvo = glm::vec4(alvoBunny.x, alvoBunny.y, alvoBunny.z, 1.0f);
+
+    float raioTiro = 0.2f;          // Raio do tiro (ajuste conforme escala)
+    float raioAlvo = alvoBunny.raio; // Raio do alvo (bunny)
+
+    // Verifica colisão usando colisão esfera-cubo (bounding box)
+    if (sphereIntersectsCube(centroTiro, raioTiro, centroAlvo, raioAlvo)) {
+        tiro.ativo = false;
+        printf("Tiro colidiu com o Bunny!\n");
+        // Aqui você pode implementar lógica extra, como dano ou pontuação
+        continue;
+    }
+
+    // Renderiza o tiro
+    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(raioTiro, raioTiro, raioTiro);
     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
     glUniform1i(g_object_id_uniform, SPHERE);
     DrawVirtualObject("the_sphere");
-}      //bunny
+}
+
+    
+
+//bunny
        model = Matrix_Translate(1.0f,-1.0f,0.0f)
               * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f)
               * Matrix_Scale(2.0f, 2.0f, 2.0f);
