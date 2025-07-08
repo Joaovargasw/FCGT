@@ -30,6 +30,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <ctime>  // para time()
+#include <chrono>
 
 
 // Headers das bibliotecas OpenGL
@@ -287,7 +288,7 @@ std::vector<Tiro> tiros;
 float tempoUltimoTeleport = 0.0f;  // para controle do tempo
 float distanciaAtual = 15.0f;      // distância inicial grande
 float tempoDesdeUltimoTeleporte = 0.0f;
-const float intervaloTeleporte = 3.0f; // 3 segundos
+const float intervaloTeleporte = 2.5f; // 3 segundos
 float distanciaInicial = 15.0f;  // distância inicial longe do Batman
 
 const float distanciaReduzidaPorTeleport = 1.0f; // Quanto diminui a cada teleporte
@@ -299,12 +300,13 @@ void PosicionarBunnyDistante(float batman_x, float batman_z, float distancia) {
     bunny_pos_z = batman_z + sin(angulo) * distancia;
     bunny_pos_y = -1.8f;  // altura fixa no chão
 }
-int tirosAcertados = 0;             // Contador de tiros no bunny
-bool jogoFinalizado = false;        // Flag para fim do jogo
-bool jogadorGanhou = false;         // Flag para indicar vitória
-float tempoColisaoCont = 0.0f;      // Tempo que a colisão Batman-Bunny está ativa
-const float tempoLimiteColisao = 5.0f;  // 5 segundos para perder
-const int tirosParaVencer = 10;     // Quantidade de tiros para ganhar
+
+bool jogoAtivo = true;
+float tempoColisaoCont = 0.0f;           // Contador de tempo de colisão
+const float tempoLimiteColisao = 1.0f;   // 3 segundos de colisão para perder
+
+int tirosAcertados = 0;
+const int tirosParaVencer = 15;
 
 int main(int argc, char* argv[])
 {
@@ -428,6 +430,7 @@ int main(int argc, char* argv[])
     Alvo alvoBatman = {batman_pos_x, batman_pos_y, batman_pos_z, raioBatman};
     Alvo alvoBunny = {bunny_pos_x, bunny_pos_y, bunny_pos_z, raioBunny};
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
+    float ultimoTempo = (float)glfwGetTime();
     while (!glfwWindowShouldClose(window)) //################################################################################################################################
     {
   
@@ -447,6 +450,8 @@ int main(int argc, char* argv[])
         alvoBunny.raio = bunnyRaio;
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         float tempoAtual = (float)glfwGetTime();
+        float deltaTime = tempoAtual - ultimoTempo;
+        ultimoTempo = tempoAtual;
         
 // Atualize o tempo de teletransporte
 tempoDesdeUltimoTeleporte += 0.016f; // assume ~60FPS, ajuste se usar tempo real
@@ -574,7 +579,7 @@ glUniform1i(g_object_id_uniform, WALL_ID);
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 //###############################################################################################################
 // Lógica de colisão entre bunny e batman
-
+if (jogoAtivo) {
 alvoBatman.x = batman_pos_x;
 alvoBatman.y = batman_pos_y;
 alvoBatman.z = batman_pos_z;
@@ -596,8 +601,17 @@ if (keyW) {
     printf("Testando colisão com nova posição: (%.2f, %.2f, %.2f)\n", nova_x, batman_pos_y, nova_z);
     printf("Raio Batman + margem: %.2f, Raio Bunny: %.2f\n", raioBatman + margem, alvoBunny.raio);
 
-    if (ColisaoEsfericaAlvo(novoAlvoBatman, alvoBunny)) {
+    if (ColisaoEsfericaAlvo(novoAlvoBatman, alvoBunny)) { /////////////////////////////////////////////////////////////
+        tempoColisaoCont += deltaTime;
         printf("Movimento bloqueado: colisão com Bunny!\n");
+        if (tempoColisaoCont >= tempoLimiteColisao) {
+            jogoAtivo = false;
+            printf("Você perdeu! O Bunny colidiu com você por 3 segundos.\n");
+             glfwSetWindowShouldClose(window, GL_TRUE);
+            // Aqui pode disparar a lógica para fim de jogo: mostrar mensagem, tela, etc.
+        }/*else{
+        tempoColisaoCont = 0.0f; // Reseta tempo de colisão se não está mais colidindo
+        }////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
         // Opcional: empurrar para fora para evitar sobreposição
         float dxCol = batman_pos_x - bunny_pos_x;
@@ -610,10 +624,18 @@ if (keyW) {
             batman_pos_z += (dzCol / dist) * overlap;
         }
     } else {
+    tempoColisaoCont = 0.0f;
         // Não colidiu, pode avançar
         batman_pos_x = nova_x;
         batman_pos_z = nova_z;
     }
+    if (tirosAcertados >= tirosParaVencer) {///////////////////////////////////////////////////////////////////////////////////
+        jogoAtivo = false;
+        printf("Parabéns! Você venceu acertando %d tiros no Bunny!\n", tirosParaVencer);
+       glfwSetWindowShouldClose(window, GL_TRUE);
+       
+    }
+}
 }
 
 
@@ -646,7 +668,16 @@ if (keyW) {
     // Verifica colisão usando colisão esfera-cubo (bounding box)
     if (sphereIntersectsCube(centroTiro, raioTiro, centroAlvo, raioAlvo)) {
         tiro.ativo = false;
+        tirosAcertados++;
         printf("Tiro colidiu com o Bunny!\n");
+        
+        if (tirosAcertados >= tirosParaVencer) {
+            jogoAtivo = false;
+            printf("Parabéns! Você venceu acertando %d tiros no Bunny!\n", tirosParaVencer);
+            glfwSetWindowShouldClose(window, GL_TRUE);
+            
+            // Aqui pode adicionar lógica para terminar o jogo (ex: sair do loop, mostrar tela, etc)
+        }
         // Aqui você pode implementar lógica extra, como dano ou pontuação
         continue;
     }
