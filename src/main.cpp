@@ -160,6 +160,8 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 // Declaração da função (assinatura/protótipo)
 
 
+void DispararTiro();
+
 // ...outras declarações...
 
 
@@ -248,7 +250,9 @@ bool first_mouse = true;
 float batman_angulo = 0.0f; 
     float batman_pos_x = 0.0f;
      float batman_pos_z = 0.0f;
+     float batman_pos_y = 0.0f;
      bool keyW = false, keyA = false, keyS = false, keyD = false;
+     float tiro_offset_y = 0.2f;
      
      
      
@@ -264,6 +268,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "ERROR: glfwInit() failed.\n");
         std::exit(EXIT_FAILURE);
     }
+   //******************************************************************************************************
 
     // Definimos o callback para impressão de erros da GLFW no terminal
     glfwSetErrorCallback(ErrorCallback);
@@ -339,6 +344,10 @@ int main(int argc, char* argv[])
     ObjModel planecmodel("../../data/planec.obj");
     ComputeNormals(&planecmodel);
     BuildTrianglesAndAddToVirtualScene(&planecmodel);
+    
+    ObjModel spheremodel("../../data/sphere.obj");
+    ComputeNormals(&spheremodel);
+    BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
     if ( argc > 1 )
     {
@@ -360,6 +369,8 @@ int main(int argc, char* argv[])
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window)) //################################################################################################################################
     {
+  
+
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -372,29 +383,9 @@ int main(int argc, char* argv[])
         // Atualiza e desenha tiros
 // Atualiza e desenha tiros
 
-
-
-for (auto& tiro : tiros) {
-    if (!tiro.ativo) continue;
-
-    // Move o tiro
-    tiro.x += tiro.dx * tiro.speed;
-    tiro.z += tiro.dz * tiro.speed;
-    tiro.tempoVivo += 0.016f; // 1 frame ~16ms, ajusta se necessário
-
-    // Desativa se passar do tempo (10 segundos, por exemplo)
-    if (tiro.tempoVivo > 10.0f) {
-        tiro.ativo = false;
-        continue;
-    }
 glfwSetCursorPosCallback(window, CursorPosCallback);
 
-    // Desenha o tiro (usa uma esfera, cubo, etc, ou um modelo próprio)
-    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
-    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
-    glUniform1i(g_object_id_uniform, SPHERE); // Ou outro ID para o tiro
-    DrawVirtualObject("the_sphere");
-}
+
 
 // Declara só uma vez:
 float velocidade = 0.1f;
@@ -467,7 +458,7 @@ glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camer
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.6f;  // Posição do "near plane"
-        float farplane  = -50.0f; // Posição do "far plane"
+        float farplane  = -500.0f; // Posição do "far plane"
        
 
         if (g_UsePerspectiveProjection)
@@ -498,13 +489,25 @@ glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camer
         // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
+//###############################################################################################################
 
-     
+for (auto& tiro : tiros) {
+    if (!tiro.ativo) continue;
 
-        
-        //###############################################################
-        
+    tiro.x += tiro.dx * tiro.speed;
+    tiro.z -= tiro.dz * tiro.speed;
+    tiro.tempoVivo += 0.016f; // tempo aproximado de um frame (ajuste conforme FPS)
 
+    if (tiro.tempoVivo > 10.0f) {
+        tiro.ativo = false;
+        continue;
+    }
+
+    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(0.2f, 0.2f, 0.2); // escala menor se 2.4 for grande demais
+    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
+    glUniform1i(g_object_id_uniform, SPHERE);
+    DrawVirtualObject("the_sphere");
+}
 
          model = Matrix_Translate(batman_pos_x, -1.8f, batman_pos_z)
         *Matrix_Rotate_Y(glm::radians(batman_angulo)) 
@@ -518,6 +521,9 @@ glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camer
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
          glUniform1i(g_object_id_uniform, PLANEC); // Usa o ID correto para o chão
          DrawVirtualObject("Plane_Material");
+        
+    
+        
         
         
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -1243,6 +1249,44 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
     if (g_CameraDistance < verysmallnumber)
         g_CameraDistance = verysmallnumber;
 }
+void DispararTiro()
+{
+    Tiro novoTiro;
+    float offset_frente = 0.5f;  // distância para frente do Batman
+    float offset_lateral = 0.0f; // sem deslocamento lateral
+
+    // Corrige o ângulo para alinhar com a frente do modelo (+90 graus se for necessário)
+    float angulo_ajustado = batman_angulo + 90.0f;
+
+    // Calcula direção do tiro
+    float dx = sin(glm::radians(angulo_ajustado));
+    float dz = -cos(glm::radians(angulo_ajustado));
+
+    // Define posição inicial do tiro um pouco à frente do Batman
+
+    novoTiro.x = batman_pos_x - dx * offset_frente + (-dz) * offset_lateral;
+    novoTiro.z = batman_pos_z + dz * offset_frente + dx * offset_lateral;
+    novoTiro.y = -1.4f;  // Ajuste altura para ficar próximo do chão
+    
+    printf("batman_angulo = %.2f\n", batman_angulo);
+    printf("angulo_ajustado = %.2f\n", angulo_ajustado);
+    printf("pos tiro: x=%.2f z=%.2f\n", novoTiro.x, novoTiro.z);
+
+    // Normaliza direção do tiro
+    glm::vec2 dir = glm::normalize(glm::vec2(dx, dz));
+    novoTiro.dx = dir.x;
+    novoTiro.dz = dir.y;
+
+    novoTiro.speed = 0.3f;     // velocidade do tiro (ajuste conforme preferir)
+    novoTiro.tempoVivo = 0.0f;
+    novoTiro.ativo = true;
+
+    tiros.push_back(novoTiro);
+
+    printf("Tiro disparado na pos (%.2f, %.2f, %.2f) com direção (%.2f, %.2f)\n",
+           novoTiro.x, novoTiro.y, novoTiro.z, novoTiro.dx, novoTiro.dz);
+}
+
 
 // Definição da função que será chamada sempre que o usuário pressionar alguma
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
@@ -1265,22 +1309,16 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     float delta = 3.141592 / 16; // 22.5 graus, em radianos.
     // Exemplo: rotacionar Batman com as teclas Q/E (ou seta esquerda/direita)
-if (key == GLFW_KEY_Q) batman_angulo += 5.0f; // gira para a esquerda
-if (key == GLFW_KEY_E) batman_angulo -= 5.0f; // gira para a direita
+  if (key == GLFW_KEY_Q) batman_angulo += 5.0f; // gira para a esquerda
+  if (key == GLFW_KEY_E) batman_angulo -= 5.0f; // gira para a direita
 
     
-  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-    Tiro novoTiro;
-    novoTiro.x = batman_pos_x;
-    novoTiro.y = -1.5f;         // ajusta conforme a altura do batman
-    novoTiro.z = batman_pos_z;
-    novoTiro.dx = sin(glm::radians(batman_angulo)); // direção X conforme ângulo do batman
-    novoTiro.dz = cos(glm::radians(batman_angulo)); // direção Z conforme ângulo do batman
-    novoTiro.speed = 0.2f;      // velocidade do tiro
-    novoTiro.tempoVivo = 0.0f;
-    novoTiro.ativo = true;
-    tiros.push_back(novoTiro);
+ if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+    DispararTiro();  // Só chama a função que cria e adiciona o tiro
 }
+
+
+
 
 
     // Controle de movimento contínuo (teclas pressionadas/soltas)
