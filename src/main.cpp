@@ -48,6 +48,12 @@
 #include "utils.h"
 #include "matrices.h"
 
+   #define SPHERE 0
+        #define BUNNY  1
+        #define PLANE  2
+        #define BAT     3
+        #define PLANEC  4
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -151,6 +157,11 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+// Declaração da função (assinatura/protótipo)
+
+
+// ...outras declarações...
+
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -224,14 +235,26 @@ GLint g_bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 // No início
-
-
+struct Tiro {
+    float x, y, z;    // posição atual do tiro
+    float dx, dz;     // direção do tiro (normalizado)
+    float speed;      // velocidade do tiro
+    float tempoVivo;  // tempo que já esteve ativo
+    bool ativo;       // se está ativo ou não
+};
+std::vector<Tiro> tiros; // lista de tiros ativos
+double last_mouse_x = 0.0;  // Última posição do mouse X
+bool first_mouse = true; 
+float batman_angulo = 0.0f; 
     float batman_pos_x = 0.0f;
      float batman_pos_z = 0.0f;
      bool keyW = false, keyA = false, keyS = false, keyD = false;
+     
+     
+     
 int main(int argc, char* argv[])
 {
-    //-------------------------------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
     // sistema operacional, onde poderemos renderizar com OpenGL.
@@ -335,7 +358,7 @@ int main(int argc, char* argv[])
     glFrontFace(GL_CCW);
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window)) //################################################################################################################################
     {
         // Aqui executamos as operações de renderização
 
@@ -345,12 +368,58 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        glClearColor(0.09f, 0.19f, 0.45f, 1.0f);
-          float speed = 0.1f;
-    if (keyW) batman_pos_z -= speed;
-    if (keyS) batman_pos_z += speed;
-    if (keyA) batman_pos_x -= speed;
-    if (keyD) batman_pos_x += speed;
+        glClearColor(0.09f, 0.19f, 0.45f, 1.0f);//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        // Atualiza e desenha tiros
+// Atualiza e desenha tiros
+
+
+
+for (auto& tiro : tiros) {
+    if (!tiro.ativo) continue;
+
+    // Move o tiro
+    tiro.x += tiro.dx * tiro.speed;
+    tiro.z += tiro.dz * tiro.speed;
+    tiro.tempoVivo += 0.016f; // 1 frame ~16ms, ajusta se necessário
+
+    // Desativa se passar do tempo (10 segundos, por exemplo)
+    if (tiro.tempoVivo > 10.0f) {
+        tiro.ativo = false;
+        continue;
+    }
+glfwSetCursorPosCallback(window, CursorPosCallback);
+
+    // Desenha o tiro (usa uma esfera, cubo, etc, ou um modelo próprio)
+    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(0.1f, 0.1f, 0.1f);
+    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
+    glUniform1i(g_object_id_uniform, SPHERE); // Ou outro ID para o tiro
+    DrawVirtualObject("the_sphere");
+}
+
+// Declara só uma vez:
+float velocidade = 0.1f;
+float angulo_rad = glm::radians(batman_angulo + 90.0f);
+
+// Vira para a frente (w sempre para a frente do Batman, s para trás)
+float dx = sin(angulo_rad);
+float dz = cos(angulo_rad);
+
+if (keyW) {
+    batman_pos_x += dx * velocidade;
+    batman_pos_z += dz * velocidade;
+}
+if (keyS) {
+    batman_pos_x -= dx * velocidade;
+    batman_pos_z -= dz * velocidade;
+}
+if (keyA) {
+    batman_angulo += 2.0f; // Gira para a esquerda
+}
+if (keyD) {
+    batman_angulo -= 2.0f; // Gira para a direita
+}
+
+
 
         // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
         // e também resetamos todos os pixels do Z-buffer (depth buffer).
@@ -364,21 +433,33 @@ int main(int argc, char* argv[])
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
         // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
         // e ScrollCallback().
-        float r = g_CameraDistance;
-        float y = r*sin(g_CameraPhi);
-        float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
-        float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
+float distancia_camera = 1.6f;
+float altura_camera = 2.0f;  // Mais alto = vê mais do cenário
+float altura_olhar = 1.8;   // Olhar mais para cima
 
-        // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
-        // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+float angulo_camera = batman_angulo + 90.0f;
+float dx_camera = sin(glm::radians(angulo_camera));
+float dz_camera = cos(glm::radians(angulo_camera));
 
-        // Computamos a matriz "View" utilizando os parâmetros da câmera para
-        // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+glm::vec4 camera_lookat_l = glm::vec4(
+    batman_pos_x,
+    -1.8f + altura_olhar, // Olha mais para cima
+    batman_pos_z,
+    1.0f
+);
+
+glm::vec4 camera_position_c = glm::vec4(
+    batman_pos_x - dx_camera * distancia_camera,
+    -1.8f + altura_camera,
+    batman_pos_z - dz_camera * distancia_camera,
+    1.0f
+);
+
+glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c;
+glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
+
+glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
 
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
@@ -418,9 +499,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        
-        #define BAT     3
-        #define PLANEC  4
+     
 
         
         //###############################################################
@@ -428,7 +507,7 @@ int main(int argc, char* argv[])
 
 
          model = Matrix_Translate(batman_pos_x, -1.8f, batman_pos_z)
-        *Matrix_Rotate_Y(glm::radians(90.0f)) 
+        *Matrix_Rotate_Y(glm::radians(batman_angulo)) 
         * Matrix_Scale(0.2f, 0.2f, 0.2f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BAT);
@@ -1133,7 +1212,20 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         g_LastCursorPosX = xpos;
         g_LastCursorPosY = ypos;
     }
+        if (first_mouse) {
+        last_mouse_x = xpos;
+        first_mouse = false;
+        return;
+    }
+
+    double xoffset = xpos - last_mouse_x;
+    last_mouse_x = xpos;
+
+    float sensibilidade = 0.15f; // Ajusta se quiser
+    batman_angulo -= xoffset * sensibilidade;
 }
+
+
 
 // Função callback chamada sempre que o usuário movimenta a "rodinha" do mouse.
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -1156,6 +1248,9 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
+
+
+
     // ======================
     // Não modifique este loop! Ele é utilizado para correção automatizada dos
     // laboratórios. Deve ser sempre o primeiro comando desta função KeyCallback().
@@ -1169,6 +1264,24 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         glfwSetWindowShouldClose(window, GL_TRUE);
 
     float delta = 3.141592 / 16; // 22.5 graus, em radianos.
+    // Exemplo: rotacionar Batman com as teclas Q/E (ou seta esquerda/direita)
+if (key == GLFW_KEY_Q) batman_angulo += 5.0f; // gira para a esquerda
+if (key == GLFW_KEY_E) batman_angulo -= 5.0f; // gira para a direita
+
+    
+  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+    Tiro novoTiro;
+    novoTiro.x = batman_pos_x;
+    novoTiro.y = -1.5f;         // ajusta conforme a altura do batman
+    novoTiro.z = batman_pos_z;
+    novoTiro.dx = sin(glm::radians(batman_angulo)); // direção X conforme ângulo do batman
+    novoTiro.dz = cos(glm::radians(batman_angulo)); // direção Z conforme ângulo do batman
+    novoTiro.speed = 0.2f;      // velocidade do tiro
+    novoTiro.tempoVivo = 0.0f;
+    novoTiro.ativo = true;
+    tiros.push_back(novoTiro);
+}
+
 
     // Controle de movimento contínuo (teclas pressionadas/soltas)
     if (action == GLFW_PRESS)
