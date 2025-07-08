@@ -47,6 +47,8 @@
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+#include "colisions.h"
+
 
         #define SPHERE 0
         #define BUNNY  1
@@ -239,7 +241,7 @@ GLint g_bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 // No início
-struct Tiro {
+/*struct Tiro {
     float x, y, z;    // posição atual do tiro
     float dx, dz;     // direção do tiro (normalizado)
     float speed;      // velocidade do tiro
@@ -247,6 +249,8 @@ struct Tiro {
     bool ativo;       // se está ativo ou não
 };
 std::vector<Tiro> tiros; // lista de tiros ativos
+*/
+
 double last_mouse_x = 0.0;  // Última posição do mouse X
 bool first_mouse = true; 
 float batman_angulo = 0.0f; 
@@ -266,6 +270,17 @@ float alien_pos_z = 0.0f; // posição no eixo Z
 float limiteZ = 20.0f / 2.0f; // 10.0f
 float alturaParede = 3.0f;
 float espessuraParede = 0.2f;
+float bunnyRaio = 2.3f; // esse raio é para o tiro
+
+// ESSES raios são para a colisão entre batman e bunny
+float raioBatman = 1.8f; // ajuste conforme a escala do seu modelo
+float raioBunny = 1.8f;
+
+//Alvo alvoBunny;
+float bunny_pos_x = 0.0f;    // posição inicial X
+float bunny_pos_y = -1.8f;   // altura do chão no seu cenário, como o batman
+float bunny_pos_z = 0.0f;    // posição inicial Z
+std::vector<Tiro> tiros;
 
 
 int main(int argc, char* argv[])
@@ -387,7 +402,8 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
-
+    Alvo alvoBatman = {batman_pos_x, batman_pos_y, batman_pos_z, raioBatman};
+    Alvo alvoBunny = {bunny_pos_x, bunny_pos_y, bunny_pos_z, raioBunny};
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window)) //################################################################################################################################
     {
@@ -402,35 +418,39 @@ int main(int argc, char* argv[])
         //
         //           R     G     B     A
         glClearColor(0.09f, 0.19f, 0.45f, 1.0f);//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-        // Atualiza e desenha tiros
-// Atualiza e desenha tiros
+        alvoBunny.x = bunny_pos_x;
+        alvoBunny.y = bunny_pos_y;
+        alvoBunny.z = bunny_pos_z;
+        alvoBunny.raio = bunnyRaio;
+       
+
 
 glfwSetCursorPosCallback(window, CursorPosCallback);
 
 
 glUniform1i(g_object_id_uniform, WALL_ID);
 // Declara só uma vez:
-float velocidade = 0.1f;
-float angulo_rad = glm::radians(batman_angulo + 90.0f);
+    float velocidade = 0.1f;
+    float angulo_rad = glm::radians(batman_angulo + 90.0f);
 
-// Vira para a frente (w sempre para a frente do Batman, s para trás)
-float dx = sin(angulo_rad);
-float dz = cos(angulo_rad);
+    // Vira para a frente (w sempre para a frente do Batman, s para trás)
+    float dx = sin(angulo_rad);
+    float dz = cos(angulo_rad);
 
-if (keyW) {
-    batman_pos_x += dx * velocidade;
-    batman_pos_z += dz * velocidade;
-}
-if (keyS) {
-    batman_pos_x -= dx * velocidade;
-    batman_pos_z -= dz * velocidade;
-}
-if (keyA) {
-    batman_angulo += 2.0f; // Gira para a esquerda
-}
-if (keyD) {
-    batman_angulo -= 2.0f; // Gira para a direita
-}
+    if (keyW) {
+       batman_pos_x += dx * velocidade;
+       batman_pos_z += dz * velocidade;
+    }
+    if (keyS) {
+        batman_pos_x -= dx * velocidade;
+       batman_pos_z -= dz * velocidade;
+    }
+    if (keyA) {
+        batman_angulo += 2.0f; // Gira para a esquerda
+    }
+    if (keyD) {
+        batman_angulo -= 2.0f; // Gira para a direita
+    }
 
 
 
@@ -446,32 +466,32 @@ if (keyD) {
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
         // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
         // e ScrollCallback().
-float distancia_camera = 1.6f;
-float altura_camera = 2.0f;  // Mais alto = vê mais do cenário
-float altura_olhar = 1.8;   // Olhar mais para cima
+    float distancia_camera = 1.6f;
+    float altura_camera = 2.0f;  // Mais alto = vê mais do cenário
+    float altura_olhar = 1.8;   // Olhar mais para cima
 
-float angulo_camera = batman_angulo + 90.0f;
-float dx_camera = sin(glm::radians(angulo_camera));
-float dz_camera = cos(glm::radians(angulo_camera));
+    float angulo_camera = batman_angulo + 90.0f;
+    float dx_camera = sin(glm::radians(angulo_camera));
+    float dz_camera = cos(glm::radians(angulo_camera));
 
-glm::vec4 camera_lookat_l = glm::vec4(
+    glm::vec4 camera_lookat_l = glm::vec4(
     batman_pos_x,
     -1.8f + altura_olhar, // Olha mais para cima
     batman_pos_z,
     1.0f
-);
+    );
 
-glm::vec4 camera_position_c = glm::vec4(
+    glm::vec4 camera_position_c = glm::vec4(
     batman_pos_x - dx_camera * distancia_camera,
     -1.8f + altura_camera,
     batman_pos_z - dz_camera * distancia_camera,
     1.0f
-);
+    );
 
-glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c;
-glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
+    glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c;
+    glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 
-glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+    glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
 
         // Agora computamos a matriz de Projeção.
@@ -512,28 +532,93 @@ glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camer
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 //###############################################################################################################
+// Atualiza os alvos com as posições atuais
+alvoBatman.x = batman_pos_x;
+alvoBatman.y = batman_pos_y;
+alvoBatman.z = batman_pos_z;
+
+alvoBunny.x = bunny_pos_x;
+alvoBunny.y = bunny_pos_y;
+alvoBunny.z = bunny_pos_z;
+
+// Se a tecla W estiver pressionada, tenta mover para frente
+if (keyW) {
+    float nova_x = batman_pos_x + dx * velocidade;
+    float nova_z = batman_pos_z + dz * velocidade;
+
+    // Margem para folga na colisão
+    float margem = 0.5f; 
+
+    Alvo novoAlvoBatman = {nova_x, batman_pos_y, nova_z, raioBatman + margem};
+
+    printf("Testando colisão com nova posição: (%.2f, %.2f, %.2f)\n", nova_x, batman_pos_y, nova_z);
+    printf("Raio Batman + margem: %.2f, Raio Bunny: %.2f\n", raioBatman + margem, alvoBunny.raio);
+
+    if (ColisaoEsfericaAlvo(novoAlvoBatman, alvoBunny)) {
+        printf("Movimento bloqueado: colisão com Bunny!\n");
+
+        // Opcional: empurrar para fora para evitar sobreposição
+        float dxCol = batman_pos_x - bunny_pos_x;
+        float dzCol = batman_pos_z - bunny_pos_z;
+        float dist = sqrt(dxCol*dxCol + dzCol*dzCol);
+
+        if (dist > 0.0001f) {
+            float overlap = (raioBatman + raioBunny + margem) - dist;
+            batman_pos_x += (dxCol / dist) * overlap;
+            batman_pos_z += (dzCol / dist) * overlap;
+        }
+    } else {
+        // Não colidiu, pode avançar
+        batman_pos_x = nova_x;
+        batman_pos_z = nova_z;
+    }
+}
 
 
-                    
 
 
-for (auto& tiro : tiros) {
-    if (!tiro.ativo) continue;
+// Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas
+// E que 'tiro' tenha campos x,y,z, dx,dz, speed, tempoVivo e ativo
 
-    tiro.x += tiro.dx * tiro.speed;
-    tiro.z -= tiro.dz * tiro.speed;
-    tiro.tempoVivo += 0.016f; // tempo aproximado de um frame (ajuste conforme FPS)
+    for (auto& tiro : tiros) {
+       if (!tiro.ativo) continue;
 
+    // Atualiza posição do tiro
+       tiro.x += tiro.dx * tiro.speed;
+        tiro.z -= tiro.dz * tiro.speed;
+        tiro.tempoVivo += 0.016f; // tempo aproximado de um frame (ajuste conforme FPS)
+
+    // Verifica se tiro passou do tempo máximo
     if (tiro.tempoVivo > 10.0f) {
         tiro.ativo = false;
         continue;
     }
 
-    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(0.2f, 0.2f, 0.2); // escala menor se 2.4 for grande demais
+    // Centros do tiro e do alvo (bunny)
+    glm::vec4 centroTiro = glm::vec4(tiro.x, tiro.y, tiro.z, 1.0f);
+    glm::vec4 centroAlvo = glm::vec4(alvoBunny.x, alvoBunny.y, alvoBunny.z, 1.0f);
+
+    float raioTiro = 0.2f;          // Raio do tiro (ajuste conforme escala)
+    float raioAlvo = alvoBunny.raio; // Raio do alvo (bunny)
+
+    // Verifica colisão usando colisão esfera-cubo (bounding box)
+    if (sphereIntersectsCube(centroTiro, raioTiro, centroAlvo, raioAlvo)) {
+        tiro.ativo = false;
+        printf("Tiro colidiu com o Bunny!\n");
+        // Aqui você pode implementar lógica extra, como dano ou pontuação
+        continue;
+    }
+
+    // Renderiza o tiro
+    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(raioTiro, raioTiro, raioTiro);
     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
     glUniform1i(g_object_id_uniform, SPHERE);
     DrawVirtualObject("the_sphere");
-}      //bunny
+    }
+
+    
+
+        //bunny
        model = Matrix_Translate(1.0f,-1.0f,0.0f)
               * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f)
               * Matrix_Scale(2.0f, 2.0f, 2.0f);
