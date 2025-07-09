@@ -368,7 +368,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 00288585 - João Vitor Vargas Oliveira - Shoot to kill", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "INF01047 - 00288585 - João Vitor Vargas Oliveira - Killer rabbit", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -415,9 +415,10 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/bat.jpg");      // TextureImage0
     LoadTextureImage("../../data/planec.jpg"); // TextureImage1
-    LoadTextureImage("../../data/bunny.jpg");    // 2
-    LoadTextureImage("../../data/tiro.jpg");    // 3
-    LoadTextureImage("../../data/tiro2.jpg");    // 4
+    LoadTextureImage("../../data/bunny.jpg");    // TextureImage2
+    LoadTextureImage("../../data/tiro.jpg");    // TextureImage3
+    LoadTextureImage("../../data/tiro2.jpg");    // TextureImage14
+    LoadTextureImage("../../data/lua.jpg");    // TextureImage5
   
 
 
@@ -544,6 +545,8 @@ glUniform1i(g_object_id_uniform, WALL_ID);
         // Pedimos para a GPU utilizar o programa de GPU criado acima (contendo
         // os shaders de vértice e fragmentos).
         glUseProgram(g_GpuProgramID);
+        
+      //,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
         // Computamos a posição da câmera utilizando coordenadas esféricas.  As
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
@@ -575,6 +578,17 @@ glUniform1i(g_object_id_uniform, WALL_ID);
     glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 
     glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+      glUseProgram(g_GpuProgramID);//,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,BLIN PHONG
+        glm::vec4 light_position_world(10.0f, 20.0f, 10.0f, 1.0f);
+        glm::vec3 light_intensity(1.0f, 1.0f, 1.0f);
+        glm::vec3 Ks(0.7f, 0.7f, 0.7f);
+        float shininess = 32.0f;
+        
+        glUniform4fv(glGetUniformLocation(g_GpuProgramID, "light_position_world"), 1, glm::value_ptr(light_position_world));
+        glUniform3fv(glGetUniformLocation(g_GpuProgramID, "light_intensity"), 1, glm::value_ptr(light_intensity));
+        glUniform3fv(glGetUniformLocation(g_GpuProgramID, "Ks"), 1, glm::value_ptr(Ks));
+        glUniform1f(glGetUniformLocation(g_GpuProgramID, "shininess"), shininess);
+        glUniform4fv(glGetUniformLocation(g_GpuProgramID, "view_position_world"), 1, glm::value_ptr(camera_position_c));
 
 
         // Agora computamos a matriz de Projeção.
