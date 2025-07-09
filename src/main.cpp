@@ -285,10 +285,10 @@ std::vector<Tiro> tiros;
 float tempoUltimoTeleport = 0.0f;  // para controle do tempo
 float distanciaAtual = 20.0f;      // distância inicial grande
 float tempoDesdeUltimoTeleporte = 0.0f;
-const float intervaloTeleporte = 1.5f; // 3 segundos setar pra 2 s aumentei pra arrumar o shader   VELOCIDADE DE TELEPORTE
+const float intervaloTeleporte = 1.5f; // 3 segundos setar pra 2 s aumentei pra arrumar o shader                                       VELOCIDADE DE TELEPORTE
 float distanciaInicial = 150.0f;  // distância inicial longe do Batman a cada teletransporte diminuo a distancia do batman
 
-const float distanciaReduzidaPorTeleport = 1.0f; // Quanto diminui a cada teleporte
+const float distanciaReduzidaPorTeleport = 1.0f; //                                                                          QUANTO DIMINUI A CADA TELETRANSPORTE
 
 // Função que posiciona o Bunny numa volta ao redor do Batman
 void PosicionarBunnyDistante(float batman_x, float batman_z, float distancia) {
@@ -300,10 +300,10 @@ void PosicionarBunnyDistante(float batman_x, float batman_z, float distancia) {
 
 bool jogoAtivo = true;
 float tempoColisaoCont = 0.0f;           // Contador de tempo de colisão
-const float tempoLimiteColisao = 0.5f;   // 3 segundos de colisão para perder
+const float tempoLimiteColisao = 0.5f;   // 3 segundos de colisão para perder                                  PERSONAGEM MORRE SE PASSAR DESSE TEMPO DE COLISÃO BATMAN MORTO / TEMPO DE COLISÃO.
 
 int tirosAcertados = 0;
-const int tirosParaVencer = 15;
+const int tirosParaVencer = 10;                                                                                //TIROS PRA MATAR O BUNNY
 
 //&&&&&&&&&&&&&&&&&&&&&BEZIER BEZIER BEZIER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 glm::vec4 bezier_p0(-25.0f, 8.0f,  0.0f, 1.0f);
