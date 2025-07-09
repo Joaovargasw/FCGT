@@ -96,10 +96,21 @@ void main()
     float maxx = bbox_max.x;
     float miny = bbox_min.y;
     float maxy = bbox_max.y;
+    float scaleU = 0.75;
+    float scaleV = 0.6;
+    float offsetU = 0.1;
+    float offsetV = 0.25;
+    float offset = 0.3;
+    
 
+   
     // Mapeamento planar em XY do modelo, normalizando para [0,1]
-   U = (position_model.x - minx) / (maxx - minx);
-   V = (position_model.y - miny) / (maxy - miny);
+    // Mapeamento planar em XY do modelo, normalizando para [0,1]
+   U =  (1 - ( 0.5 + (position_model.x - minx) / (maxx - minx))) * scaleU + offsetU ;
+   V =   (((position_model.y - miny) / (maxy - miny)) - offset) * scaleV + offsetV;
+   
+   /*U =  1 - ( 0.5 + (position_model.x - minx) / (maxx - minx));
+   V =   ((position_model.y - miny) / (maxy - miny)) - offset;*/
 
 
     color.rgb = texture(TextureImage2, vec2(U, V)).rgb; // bunny.jpg
