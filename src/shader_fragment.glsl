@@ -166,7 +166,7 @@ if (object_id == BAT) {
     // Defina uma cor: aqui, vermelha no centro, azul nas bordas
     vec3 cor_centro = vec3(1.0, 0.2, 0.2); // vermelho claro
     vec3 cor_borda  = vec3(0.1, 0.1, 1.0); // azul
-
+    
     color.rgb = vec3(1.0, 1.0, 0.2); // amarelo forte
     color.a = 1.0;
     return;
