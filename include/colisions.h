@@ -39,4 +39,3 @@ bool ColisaoEsfericaAlvo(const Alvo& alvo1, const Alvo& alvo2);
 
 
 #endif // COLISIONS_H
-
