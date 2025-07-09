@@ -305,6 +305,37 @@ const float tempoLimiteColisao = 1.0f;   // 3 segundos de colisão para perder
 int tirosAcertados = 0;
 const int tirosParaVencer = 15;
 
+//&&&&&&&&&&&&&&&&&&&&&BEZIER BEZIER BEZIER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+glm::vec4 bezier_p0(-25.0f, 8.0f,  0.0f, 1.0f);
+glm::vec4 bezier_p1(-12.0f, 13.0f, -16.0f, 1.0f);
+glm::vec4 bezier_p2( 12.0f, 13.0f,  16.0f, 1.0f);
+glm::vec4 bezier_p3( 25.0f, 8.0f,   0.0f, 1.0f);
+//glm::vec4 bezier_p3(batman_pos_x, 2.5f, batman_pos_z, 1.0f); // usa sempre o X e Z do batman
+
+float t_lua = 0.0f;
+float velocidadeLua = 0.002f; // ajuste para mais rápido/lento
+bool lua_ativa = true;         // para ativar/desativar a lua
+float raioLua = 5.0f;          // escala da lua (ajuste conforme seu cenário)
+float raio_orbita = 25.0f;      // Distância da lua ao centro do chão (ajuste como quiser)
+float altura_lua = 10.0f;       // Altura fixa da lua
+float velocidade_orbita = 0.18f; // Quanto maior, mais rápido a lua gira
+
+ glm::vec4 calculaBezier(float t, glm::vec4 p0, glm::vec4 p1, glm::vec4 p2, glm::vec4 p3) {
+    float u = 1.0f - t;
+    return u*u*u * p0 +
+           3 * u*u * t * p1 +
+           3 * u * t*t * p2 +
+           t*t*t * p3;
+   }
+
+
+
+
+int voltas_lua = 0;
+
+
+
+
 int main(int argc, char* argv[])
 {
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -375,7 +406,8 @@ int main(int argc, char* argv[])
     const GLubyte *glslversion = glGetString(GL_SHADING_LANGUAGE_VERSION);
 
     printf("GPU: %s, %s, OpenGL %s, GLSL %s\n", vendor, renderer, glversion, glslversion);
-
+    
+   
     // Carregamos os shaders de vértices e de fragmentos que serão utilizados
     // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
     //
@@ -579,23 +611,23 @@ glUniform1i(g_object_id_uniform, WALL_ID);
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 //###############################################################################################################
-// Lógica de colisão entre bunny e batman
-if (jogoAtivo) {
-alvoBatman.x = batman_pos_x;
-alvoBatman.y = batman_pos_y;
-alvoBatman.z = batman_pos_z;
+      // Lógica de colisão entre bunny e batman
+    if (jogoAtivo) {
+        alvoBatman.x = batman_pos_x;
+        alvoBatman.y = batman_pos_y;
+        alvoBatman.z = batman_pos_z;
 
-alvoBunny.x = bunny_pos_x;
-alvoBunny.y = bunny_pos_y;
-alvoBunny.z = bunny_pos_z;
+        alvoBunny.x = bunny_pos_x;
+        alvoBunny.y = bunny_pos_y;
+        alvoBunny.z = bunny_pos_z;
 
 // Se a tecla W estiver pressionada, tenta mover para frente
-if (keyW) {
-    float nova_x = batman_pos_x + dx * velocidade;
-    float nova_z = batman_pos_z + dz * velocidade;
+    if (keyW) {
+        float nova_x = batman_pos_x + dx * velocidade;
+        float nova_z = batman_pos_z + dz * velocidade;
 
     // Margem para folga na colisão
-    float margem = 0.5f; 
+        float margem = 0.5f; 
 
     Alvo novoAlvoBatman = {nova_x, batman_pos_y, nova_z, raioBatman + margem};
 
@@ -624,23 +656,20 @@ if (keyW) {
             batman_pos_x += (dxCol / dist) * overlap;
             batman_pos_z += (dzCol / dist) * overlap;
         }
-    } else {
-    tempoColisaoCont = 0.0f;
-        // Não colidiu, pode avançar
-        batman_pos_x = nova_x;
-        batman_pos_z = nova_z;
-    }
-    if (tirosAcertados >= tirosParaVencer) {///////////////////////////////////////////////////////////////////////////////////
+        } else {
+          tempoColisaoCont = 0.0f;
+          // Não colidiu, pode avançar
+          batman_pos_x = nova_x;
+          batman_pos_z = nova_z;
+        }
+      if (tirosAcertados >= tirosParaVencer) {///////////////////////////////////////////////////////////////////////////////////
         jogoAtivo = false;
         printf("Parabéns! Você venceu acertando %d tiros no Bunny!\n", tirosParaVencer);
-       glfwSetWindowShouldClose(window, GL_TRUE);
+        glfwSetWindowShouldClose(window, GL_TRUE);
        
     }
 }
 }
-
-
-
 
 // Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas
 // E que 'tiro' tenha campos x,y,z, dx,dz, speed, tempoVivo e ativo
@@ -689,6 +718,29 @@ if (keyW) {
     glUniform1i(g_object_id_uniform, SPHERE);
     DrawVirtualObject("the_sphere");
     }
+    
+    
+    // loop da lua ---
+
+ 
+ 
+if (lua_ativa) {
+    float angulo_lua = glfwGetTime() * velocidade_orbita; // ângulo em radianos (vai aumentando sempre)
+
+    glm::vec4 pos_lua = glm::vec4(
+        cos(angulo_lua) * raio_orbita,
+        altura_lua,
+        sin(angulo_lua) * raio_orbita,
+        1.0f
+    );
+
+    glm::mat4 modelLua = Matrix_Translate(pos_lua.x, pos_lua.y, pos_lua.z) * Matrix_Scale(raioLua, raioLua, raioLua);
+    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(modelLua));
+    glUniform1i(g_object_id_uniform, SPHERE);
+    DrawVirtualObject("the_sphere");
+}
+
+    
 
     
 
