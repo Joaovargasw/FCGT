@@ -37,6 +37,7 @@ uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
+uniform sampler2D TextureImage5;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -83,7 +84,7 @@ void main()
     float theta = atan(p.z, p.x);          // [-pi, pi]
     float phi   = asin(p.y / radius);      // [-pi/2, pi/2]
 
-    U = (theta + M_PI) / (2.0 * M_PI);           // [0,1]
+    U =  1 + (theta + M_PI) / (2.0 * M_PI);           // [0,1]
     V = (phi + (M_PI/2.0)) / M_PI;               // [0,1]
 
     color.rgb = texture(TextureImage2, vec2(U, V)).rgb;
@@ -132,7 +133,7 @@ void main()
 if (object_id == BAT) {
     U = texcoords.x;
     V = texcoords.y;
-    color.rgb = texture(TextureImage0, vec2(U, V)).rgb; // ou TextureImage1, depende da ordem do LoadTextureImage!
+    color.rgb = texture(TextureImage0, vec2(U, V)).rgb; 
     color.a = 1.0;
     return;
 }
