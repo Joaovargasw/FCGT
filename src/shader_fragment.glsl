@@ -13,7 +13,7 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
-// Matrizes computadas no código C++ e enviadas para a GPU
+// Matrizes computadas no código C++ e enviadas para a GPU  OK
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
@@ -35,6 +35,8 @@ uniform vec4 bbox_max;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
+uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -73,47 +75,38 @@ void main()
 
     if ( object_id == SPHERE )
     {
-        // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
-        // projeção esférica EM COORDENADAS DO MODELO. Utilize como referência
-        // o slides 134-150 do documento Aula_20_Mapeamento_de_Texturas.pdf.
-        // A esfera que define a projeção deve estar centrada na posição
-        // "bbox_center" definida abaixo.
+          // Calcula o centro da esfera pelo bounding box
+    vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+    vec4 p = position_model - bbox_center;
 
-        // Você deve utilizar:
-        //   função 'length( )' : comprimento Euclidiano de um vetor
-        //   função 'atan( , )' : arcotangente. Veja https://en.wikipedia.org/wiki/Atan2.
-        //   função 'asin( )'   : seno inverso.
-        //   constante M_PI
-        //   variável position_model
+    float radius = max(length(p), 0.0001); // evita divisão por zero
+    float theta = atan(p.z, p.x);          // [-pi, pi]
+    float phi   = asin(p.y / radius);      // [-pi/2, pi/2]
 
-        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+    U = (theta + M_PI) / (2.0 * M_PI);           // [0,1]
+    V = (phi + (M_PI/2.0)) / M_PI;               // [0,1]
 
-        U = 0.0;
-        V = 0.0;
+    color.rgb = texture(TextureImage2, vec2(U, V)).rgb;
+    color.a = 1.0;
+    return;
     }
-    else if ( object_id == BUNNY )
-    {
-        // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
-        // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
-        // o slides 99-104 do documento Aula_20_Mapeamento_de_Texturas.pdf,
-        // e também use as variáveis min*/max* definidas abaixo para normalizar
-        // as coordenadas de textura U e V dentro do intervalo [0,1]. Para
-        // tanto, veja por exemplo o mapeamento da variável 'p_v' utilizando
-        // 'h' no slides 158-160 do documento Aula_20_Mapeamento_de_Texturas.pdf.
-        // Veja também a Questão 4 do Questionário 4 no Moodle.
+   else if ( object_id == BUNNY )
+{
+    float minx = bbox_min.x;
+    float maxx = bbox_max.x;
+    float miny = bbox_min.y;
+    float maxy = bbox_max.y;
 
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
+    // Mapeamento planar em XY do modelo, normalizando para [0,1]
+   U = (position_model.x - minx) / (maxx - minx);
+   V = (position_model.y - miny) / (maxy - miny);
 
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
 
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
+    color.rgb = texture(TextureImage2, vec2(U, V)).rgb; // bunny.jpg
+    color.a = 1.0;
+    return;
+}
 
-        U = 0.0;
-        V = 0.0;
-    }
     else if ( object_id == PLANE )
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
@@ -170,6 +163,7 @@ if (object_id == BAT) {
     //    transparentes que estão mais longe da câmera).
     // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
+    
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
