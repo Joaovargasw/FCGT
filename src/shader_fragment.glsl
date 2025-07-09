@@ -39,6 +39,14 @@ uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
 uniform sampler2D TextureImage5;
 
+//Lambert + Blinn-Phong  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%MARCAÇÃO SHADER BLINN - PHONG
+uniform vec4 light_position_world;
+uniform vec3 light_intensity;
+uniform vec3 Ks;
+uniform float shininess;
+uniform vec4 view_position_world;
+
+
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
 
@@ -133,10 +141,37 @@ void main()
 if (object_id == BAT) {
     U = texcoords.x;
     V = texcoords.y;
-    color.rgb = texture(TextureImage0, vec2(U, V)).rgb; 
+    vec3 base_color = texture(TextureImage0, vec2(U, V)).rgb; // Cor base da textura
+
+    // Vetor normalizado da normal
+    vec3 n = normalize(normal.xyz);
+
+    // Vetor da luz (da posição do fragmento para a luz)
+    vec3 l = normalize(light_position_world.xyz - position_world.xyz);
+
+    // Vetor da câmera
+    vec3 v = normalize(view_position_world.xyz - position_world.xyz);
+
+    // Vetor halfway para Blinn-Phong
+    vec3 h = normalize(l + v);
+
+    // Lambert (difuso)
+    float n_dot_l = max(0.0, dot(n, l));
+    vec3 I_difusa = light_intensity * base_color * n_dot_l;
+
+    // Especular Blinn-Phong
+    float n_dot_h = max(0.0, dot(n, h));
+    float especular = pow(n_dot_h, shininess);
+    vec3 I_especular = light_intensity * Ks * especular;
+
+    // Ambiente simples (opcional)
+    vec3 I_ambiente = 0.15 * base_color;
+
+    color.rgb = I_ambiente + I_difusa + I_especular;
     color.a = 1.0;
     return;
 }
+
 
   if (object_id == PLANEC) {
     U = texcoords.x;
