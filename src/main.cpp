@@ -384,7 +384,8 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/bat.jpg");      // TextureImage0
     LoadTextureImage("../../data/planec.jpg"); // TextureImage1
     LoadTextureImage("../../data/bunny.jpg");    // 2
-     LoadTextureImage("../../data/tiro.jpg");    // 3
+    LoadTextureImage("../../data/tiro.jpg");    // 3
+    LoadTextureImage("../../data/tiro2.jpg");    // 4
   
 
 
