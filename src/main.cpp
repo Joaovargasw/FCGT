@@ -285,7 +285,7 @@ std::vector<Tiro> tiros;
 float tempoUltimoTeleport = 0.0f;  // para controle do tempo
 float distanciaAtual = 20.0f;      // distância inicial grande
 float tempoDesdeUltimoTeleporte = 0.0f;
-const float intervaloTeleporte = 10.5f; // 3 segundos setar pra 2 s aumentei pra arrumar o shader
+const float intervaloTeleporte = 1.5f; // 3 segundos setar pra 2 s aumentei pra arrumar o shader   VELOCIDADE DE TELEPORTE
 float distanciaInicial = 150.0f;  // distância inicial longe do Batman a cada teletransporte diminuo a distancia do batman
 
 const float distanciaReduzidaPorTeleport = 1.0f; // Quanto diminui a cada teleporte
@@ -469,6 +469,8 @@ int main(int argc, char* argv[])
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     float ultimoTempo = (float)glfwGetTime();
     PosicionarBunnyDistante(batman_pos_x, batman_pos_z, distanciaAtual);
+  
+
     while (!glfwWindowShouldClose(window)) //################################################################################################################################
     {
   
@@ -765,7 +767,7 @@ if (lua_ativa) {
         //bunny
 
        model = Matrix_Translate(bunny_pos_x, bunny_pos_y, bunny_pos_z)
-        * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f)
+        * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 2.0f)
         * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
