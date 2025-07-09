@@ -26,6 +26,7 @@ uniform mat4 projection;
 #define PLANEC 4
 #define TIRO  5
 uniform int object_id;
+uniform int shading_model;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
 uniform vec4 bbox_min;
@@ -45,6 +46,7 @@ uniform vec3 light_intensity;
 uniform vec3 Ks;
 uniform float shininess;
 uniform vec4 view_position_world;
+in vec3 gouraud_color;
 
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -99,7 +101,7 @@ void main()
     color.a = 1.0;
     return;
     }
-   else if ( object_id == BUNNY )
+   else if (object_id == BUNNY)
 {
     float minx = bbox_min.x;
     float maxx = bbox_max.x;
@@ -110,22 +112,41 @@ void main()
     float offsetU = 0.1;
     float offsetV = 0.25;
     float offset = 0.3;
-    
 
-   
     // Mapeamento planar em XY do modelo, normalizando para [0,1]
-    // Mapeamento planar em XY do modelo, normalizando para [0,1]
-   U =  (1 - ( 0.5 + (position_model.x - minx) / (maxx - minx))) * scaleU + offsetU ;
-   V =   (((position_model.y - miny) / (maxy - miny)) - offset) * scaleV + offsetV;
-   
-   /*U =  1 - ( 0.5 + (position_model.x - minx) / (maxx - minx));
-   V =   ((position_model.y - miny) / (maxy - miny)) - offset;*/
+    float U = (1 - (0.5 + (position_model.x - minx) / (maxx - minx))) * scaleU + offsetU;
+    float V = (((position_model.y - miny) / (maxy - miny)) - offset) * scaleV + offsetV;
 
+    vec3 tex_color = texture(TextureImage2, vec2(U, V)).rgb;
 
-    color.rgb = texture(TextureImage2, vec2(U, V)).rgb; // bunny.jpg
-    color.a = 1.0;
-    return;
+    if (shading_model == 0) // Gouraud
+    {
+        color.rgb = gouraud_color * tex_color;
+        color.a = 1.0;
+        return;
+    }
+    else // Phong por fragmento
+    {
+        vec3 N = normalize(normal.xyz);
+        vec3 L = normalize(light_position_world.xyz - position_world.xyz);
+        vec3 Vv = normalize(view_position_world.xyz - position_world.xyz);
+        vec3 R = reflect(-L, N);
+
+        float diff = max(dot(N, L), 0.0);
+        float spec = 0.0;
+        if (diff > 0.0)
+            spec = pow(max(dot(R, Vv), 0.0), shininess);
+
+        vec3 ambient = 0.2 * light_intensity;
+        vec3 diffuse = diff * light_intensity;
+        vec3 specular = spec * Ks;
+
+        color.rgb = (ambient + diffuse + specular) * tex_color;
+        color.a = 1.0;
+        return;
+    }
 }
+
 
     else if ( object_id == PLANE )
     {
