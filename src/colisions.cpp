@@ -44,4 +44,3 @@ bool caixasColidem(const BoundingBox& box1, const BoundingBox& box2)
 
     return (colideX && colideY && colideZ);
 }
-
