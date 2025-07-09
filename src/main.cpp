@@ -58,7 +58,7 @@
         #define PLANE  2
         #define BAT     3
         #define PLANEC  4
-        #define ALIEN   5
+        #define TIRO   5
         #define WALL_ID   6
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
@@ -285,7 +285,7 @@ std::vector<Tiro> tiros;
 float tempoUltimoTeleport = 0.0f;  // para controle do tempo
 float distanciaAtual = 20.0f;      // distância inicial grande
 float tempoDesdeUltimoTeleporte = 0.0f;
-const float intervaloTeleporte = 2.5f; // 3 segundos
+const float intervaloTeleporte = 10.5f; // 3 segundos setar pra 2 s aumentei pra arrumar o shader
 float distanciaInicial = 150.0f;  // distância inicial longe do Batman a cada teletransporte diminuo a distancia do batman
 
 const float distanciaReduzidaPorTeleport = 1.0f; // Quanto diminui a cada teleporte
@@ -438,6 +438,10 @@ int main(int argc, char* argv[])
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
+    
+    ObjModel tiromodel("../../data/tiro.obj");
+    ComputeNormals(&tiromodel);
+    BuildTrianglesAndAddToVirtualScene(&tiromodel);
     
   ObjModel alienModel("../../data/alien.obj");
    ComputeNormals(&alienModel);
@@ -715,7 +719,7 @@ glUniform1i(g_object_id_uniform, WALL_ID);
     // Renderiza o tiro
     glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(raioTiro, raioTiro, raioTiro);
     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
-    glUniform1i(g_object_id_uniform, SPHERE);
+    glUniform1i(g_object_id_uniform, TIRO);
     DrawVirtualObject("the_sphere");
     }
     
