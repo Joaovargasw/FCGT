@@ -24,7 +24,7 @@ uniform mat4 projection;
 #define PLANE  2
 #define BAT    3
 #define PLANEC 4
-#define ALIEN  5
+#define TIRO  5
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -144,13 +144,34 @@ if (object_id == BAT) {
     color.rgb = planec_color;
     color.a = 1.0;
     return;
-} if (object_id == ALIEN) {
-    U = texcoords.x;
-    V = texcoords.y;
-    color.rgb = texture(TextureImage2, vec2(U, V)).rgb; // textura do alien carregada na unidade 2
+} if (object_id == TIRO) {
+
+    // Calcula centro da esfera e posição local como antes
+    vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+    vec4 p = position_model - bbox_center;
+
+    float radius = max(length(p), 0.0001);
+
+    // Coordenadas UV esféricas (opcional)
+    float theta = atan(p.z, p.x);
+    float phi   = asin(p.y / radius);
+
+    float U = (theta + M_PI) / (2.0 * M_PI);
+    float V = (phi + (M_PI/2.0)) / M_PI;
+
+    // Bola colorida: gradiente do centro para as bordas (usando a posição normalizada)
+    float dist = length(p.xyz) / (0.5 * length(bbox_max.xyz - bbox_min.xyz));
+    // dist ≈ 0 no centro, ≈ 1 na borda
+
+    // Defina uma cor: aqui, vermelha no centro, azul nas bordas
+    vec3 cor_centro = vec3(1.0, 0.2, 0.2); // vermelho claro
+    vec3 cor_borda  = vec3(0.1, 0.1, 1.0); // azul
+
+    color.rgb = vec3(1.0, 1.0, 0.2); // amarelo forte
     color.a = 1.0;
     return;
 }
+
 
    else {
     Kd0 = vec3(0.7, 0.7, 0.7); // cor neutra se faltar textura
