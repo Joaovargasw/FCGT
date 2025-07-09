@@ -717,10 +717,10 @@ glUniform1i(g_object_id_uniform, WALL_ID);
     }
 
     // Renderiza o tiro
-    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(raioTiro, raioTiro, raioTiro);
+    glm::mat4 tiroModel = Matrix_Translate(tiro.x, tiro.y, tiro.z) * Matrix_Scale(raioTiro, raioTiro, raioTiro)* Matrix_Rotate_Y((float)glfwGetTime() * 20.0);
     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(tiroModel));
     glUniform1i(g_object_id_uniform, TIRO);
-    DrawVirtualObject("the_sphere");
+    DrawVirtualObject("Grid_Material.001");
     }
     
     
