@@ -29,6 +29,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <ctime>  // para time()
+#include <chrono>
+
 
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
@@ -266,10 +269,7 @@ float alien_pos_z = 0.0f; // posição no eixo Z
      float distancia_frente = 2.0f;
      float distancia_frente_camera = 5.0f; 
      //parede
- float limiteX = 20.0f / 2.0f; // 10.0f
-float limiteZ = 20.0f / 2.0f; // 10.0f
-float alturaParede = 3.0f;
-float espessuraParede = 0.2f;
+
 float bunnyRaio = 2.3f; // esse raio é para o tiro
 
 // ESSES raios são para a colisão entre batman e bunny
@@ -281,6 +281,59 @@ float bunny_pos_x = 0.0f;    // posição inicial X
 float bunny_pos_y = -1.8f;   // altura do chão no seu cenário, como o batman
 float bunny_pos_z = 0.0f;    // posição inicial Z
 std::vector<Tiro> tiros;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+float tempoUltimoTeleport = 0.0f;  // para controle do tempo
+float distanciaAtual = 20.0f;      // distância inicial grande
+float tempoDesdeUltimoTeleporte = 0.0f;
+const float intervaloTeleporte = 2.5f; // 3 segundos
+float distanciaInicial = 150.0f;  // distância inicial longe do Batman a cada teletransporte diminuo a distancia do batman
+
+const float distanciaReduzidaPorTeleport = 1.0f; // Quanto diminui a cada teleporte
+
+// Função que posiciona o Bunny numa volta ao redor do Batman
+void PosicionarBunnyDistante(float batman_x, float batman_z, float distancia) {
+    float angulo = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    bunny_pos_x = batman_x + cos(angulo) * distancia;
+    bunny_pos_z = batman_z + sin(angulo) * distancia;
+    bunny_pos_y = -1.8f;  // altura fixa no chão
+}
+
+bool jogoAtivo = true;
+float tempoColisaoCont = 0.0f;           // Contador de tempo de colisão
+const float tempoLimiteColisao = 0.5f;   // 3 segundos de colisão para perder
+
+int tirosAcertados = 0;
+const int tirosParaVencer = 15;
+
+//&&&&&&&&&&&&&&&&&&&&&BEZIER BEZIER BEZIER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+glm::vec4 bezier_p0(-25.0f, 8.0f,  0.0f, 1.0f);
+glm::vec4 bezier_p1(-12.0f, 13.0f, -16.0f, 1.0f);
+glm::vec4 bezier_p2( 12.0f, 13.0f,  16.0f, 1.0f);
+glm::vec4 bezier_p3( 25.0f, 8.0f,   0.0f, 1.0f);
+//glm::vec4 bezier_p3(batman_pos_x, 2.5f, batman_pos_z, 1.0f); // usa sempre o X e Z do batman
+
+float t_lua = 0.0f;
+float velocidadeLua = 0.5f; // ajuste para mais rápido/lento
+bool lua_ativa = true;         // para ativar/desativar a lua
+float raioLua = 5.0f;          // escala da lua (ajuste conforme seu cenário)
+float raio_orbita = 25.0f;      // Distância da lua ao centro do chão (ajuste como quiser)
+float altura_lua = 10.0f;       // Altura fixa da lua
+float velocidade_orbita = 0.5f; // Quanto maior, mais rápido a lua gira
+
+ glm::vec4 calculaBezier(float t, glm::vec4 p0, glm::vec4 p1, glm::vec4 p2, glm::vec4 p3) {
+    float u = 1.0f - t;
+    return u*u*u * p0 +
+           3 * u*u * t * p1 +
+           3 * u * t*t * p2 +
+           t*t*t * p3;
+   }
+
+
+
+
+int voltas_lua = 0;
+
+
 
 
 int main(int argc, char* argv[])
@@ -353,7 +406,8 @@ int main(int argc, char* argv[])
     const GLubyte *glslversion = glGetString(GL_SHADING_LANGUAGE_VERSION);
 
     printf("GPU: %s, %s, OpenGL %s, GLSL %s\n", vendor, renderer, glversion, glslversion);
-
+    
+   
     // Carregamos os shaders de vértices e de fragmentos que serão utilizados
     // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
     //
@@ -361,7 +415,10 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/bat.jpg");      // TextureImage0
     LoadTextureImage("../../data/planec.jpg"); // TextureImage1
-    LoadTextureImage("../../data/alien.jpg"); // TextureImage1
+    LoadTextureImage("../../data/bunny.jpg");    // 2
+    LoadTextureImage("../../data/tiro.jpg");    // 3
+    LoadTextureImage("../../data/tiro2.jpg");    // 4
+  
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulo******************************************
@@ -405,6 +462,8 @@ int main(int argc, char* argv[])
     Alvo alvoBatman = {batman_pos_x, batman_pos_y, batman_pos_z, raioBatman};
     Alvo alvoBunny = {bunny_pos_x, bunny_pos_y, bunny_pos_z, raioBunny};
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
+    float ultimoTempo = (float)glfwGetTime();
+    PosicionarBunnyDistante(batman_pos_x, batman_pos_z, distanciaAtual);
     while (!glfwWindowShouldClose(window)) //################################################################################################################################
     {
   
@@ -422,6 +481,26 @@ int main(int argc, char* argv[])
         alvoBunny.y = bunny_pos_y;
         alvoBunny.z = bunny_pos_z;
         alvoBunny.raio = bunnyRaio;
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        float tempoAtual = (float)glfwGetTime();
+        float deltaTime = tempoAtual - ultimoTempo;
+        ultimoTempo = tempoAtual;
+        
+// Atualize o tempo de teletransporte
+tempoDesdeUltimoTeleporte += 0.016f; // assume ~60FPS, ajuste se usar tempo real
+
+if (tempoDesdeUltimoTeleporte >= intervaloTeleporte) {
+    tempoDesdeUltimoTeleporte = 0.0f;
+
+    distanciaAtual -= distanciaReduzidaPorTeleport;
+    if (distanciaAtual < 2.0f) // limite para não ficar grudado no Batman
+        distanciaAtual = 2.0f;
+
+    PosicionarBunnyDistante(batman_pos_x, batman_pos_z, distanciaAtual);
+
+    printf("Bunny teleportado para: (%.2f, %.2f)\n", bunny_pos_x, bunny_pos_z);
+}
+
        
 
 
@@ -532,30 +611,40 @@ glUniform1i(g_object_id_uniform, WALL_ID);
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 //###############################################################################################################
-// Atualiza os alvos com as posições atuais
-alvoBatman.x = batman_pos_x;
-alvoBatman.y = batman_pos_y;
-alvoBatman.z = batman_pos_z;
+      // Lógica de colisão entre bunny e batman
+    if (jogoAtivo) {
+        alvoBatman.x = batman_pos_x;
+        alvoBatman.y = batman_pos_y;
+        alvoBatman.z = batman_pos_z;
 
-alvoBunny.x = bunny_pos_x;
-alvoBunny.y = bunny_pos_y;
-alvoBunny.z = bunny_pos_z;
+        alvoBunny.x = bunny_pos_x;
+        alvoBunny.y = bunny_pos_y;
+        alvoBunny.z = bunny_pos_z;
 
 // Se a tecla W estiver pressionada, tenta mover para frente
-if (keyW) {
-    float nova_x = batman_pos_x + dx * velocidade;
-    float nova_z = batman_pos_z + dz * velocidade;
+    if (keyW) {
+        float nova_x = batman_pos_x + dx * velocidade;
+        float nova_z = batman_pos_z + dz * velocidade;
 
     // Margem para folga na colisão
-    float margem = 0.5f; 
+        float margem = 0.5f; 
 
     Alvo novoAlvoBatman = {nova_x, batman_pos_y, nova_z, raioBatman + margem};
 
     printf("Testando colisão com nova posição: (%.2f, %.2f, %.2f)\n", nova_x, batman_pos_y, nova_z);
     printf("Raio Batman + margem: %.2f, Raio Bunny: %.2f\n", raioBatman + margem, alvoBunny.raio);
 
-    if (ColisaoEsfericaAlvo(novoAlvoBatman, alvoBunny)) {
+    if (ColisaoEsfericaAlvo(novoAlvoBatman, alvoBunny)) { /////////////////////////////////////////////////////////////
+        tempoColisaoCont += deltaTime;
         printf("Movimento bloqueado: colisão com Bunny!\n");
+        if (tempoColisaoCont >= tempoLimiteColisao) {
+            jogoAtivo = false;
+            printf("Você perdeu! O Bunny colidiu com você por 3 segundos.\n");
+             glfwSetWindowShouldClose(window, GL_TRUE);
+            // Aqui pode disparar a lógica para fim de jogo: mostrar mensagem, tela, etc.
+        }/*else{
+        tempoColisaoCont = 0.0f; // Reseta tempo de colisão se não está mais colidindo
+        }////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
         // Opcional: empurrar para fora para evitar sobreposição
         float dxCol = batman_pos_x - bunny_pos_x;
@@ -567,19 +656,24 @@ if (keyW) {
             batman_pos_x += (dxCol / dist) * overlap;
             batman_pos_z += (dzCol / dist) * overlap;
         }
-    } else {
-        // Não colidiu, pode avançar
-        batman_pos_x = nova_x;
-        batman_pos_z = nova_z;
+        } else {
+          tempoColisaoCont = 0.0f;
+          // Não colidiu, pode avançar
+          batman_pos_x = nova_x;
+          batman_pos_z = nova_z;
+        }
+      if (tirosAcertados >= tirosParaVencer) {///////////////////////////////////////////////////////////////////////////////////
+        jogoAtivo = false;
+        printf("Parabéns! Você venceu acertando %d tiros no Bunny!\n", tirosParaVencer);
+        glfwSetWindowShouldClose(window, GL_TRUE);
+       
     }
 }
-
-
-
+}
 
 // Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas
 // E que 'tiro' tenha campos x,y,z, dx,dz, speed, tempoVivo e ativo
-
+// colisão do tiro
     for (auto& tiro : tiros) {
        if (!tiro.ativo) continue;
 
@@ -604,7 +698,16 @@ if (keyW) {
     // Verifica colisão usando colisão esfera-cubo (bounding box)
     if (sphereIntersectsCube(centroTiro, raioTiro, centroAlvo, raioAlvo)) {
         tiro.ativo = false;
+        tirosAcertados++;
         printf("Tiro colidiu com o Bunny!\n");
+        
+        if (tirosAcertados >= tirosParaVencer) {
+            jogoAtivo = false;
+            printf("Parabéns! Você venceu acertando %d tiros no Bunny!\n", tirosParaVencer);
+            glfwSetWindowShouldClose(window, GL_TRUE);
+            
+            // Aqui pode adicionar lógica para terminar o jogo (ex: sair do loop, mostrar tela, etc)
+        }
         // Aqui você pode implementar lógica extra, como dano ou pontuação
         continue;
     }
@@ -615,16 +718,41 @@ if (keyW) {
     glUniform1i(g_object_id_uniform, SPHERE);
     DrawVirtualObject("the_sphere");
     }
+    
+    
+    // loop da lua ---
+
+ 
+ 
+if (lua_ativa) {
+    float angulo_lua = glfwGetTime() * velocidade_orbita; // ângulo em radianos (vai aumentando sempre)
+
+    glm::vec4 pos_lua = glm::vec4(
+        cos(angulo_lua) * raio_orbita,
+        altura_lua,
+        sin(angulo_lua) * raio_orbita,
+        1.0f
+    );
+
+    glm::mat4 modelLua = Matrix_Translate(pos_lua.x, pos_lua.y, pos_lua.z) * Matrix_Scale(raioLua, raioLua, raioLua);
+    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(modelLua));
+    glUniform1i(g_object_id_uniform, SPHERE);
+    DrawVirtualObject("the_sphere");
+}
+
+    
 
     
 
         //bunny
-       model = Matrix_Translate(1.0f,-1.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f)
-              * Matrix_Scale(2.0f, 2.0f, 2.0f);
+
+       model = Matrix_Translate(bunny_pos_x, bunny_pos_y, bunny_pos_z)
+        * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f)
+        * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("the_bunny");
+
 
         //BATMAN
          model = Matrix_Translate(batman_pos_x, -1.8f, batman_pos_z)
@@ -644,17 +772,7 @@ if (keyW) {
 
 
 
-        //ALIEN
-        float altura_do_alien_metade = 1.0f; // Ajusta conforme a escala do alien
-
-     alien_pos_x = batman_pos_x + dx * distancia_frente;
-     alien_pos_y = -3.0f + altura_do_alien_metade;
-     alien_pos_z = batman_pos_z + dz * distancia_frente;
-     glm::mat4 modelAlien = Matrix_Translate(alien_pos_x, alien_pos_y, alien_pos_z)
-                    * Matrix_Scale(0.5f, 0.5f, 0.5f);
-     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(modelAlien));
-     glUniform1i(g_object_id_uniform, ALIEN);
-     DrawVirtualObject("alien");
+      
 
 
     
@@ -1829,4 +1947,3 @@ void PrintObjModelInfo(ObjModel* model)
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
-
