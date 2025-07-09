@@ -383,7 +383,9 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/bat.jpg");      // TextureImage0
     LoadTextureImage("../../data/planec.jpg"); // TextureImage1
-    LoadTextureImage("../../data/alien.jpg"); // TextureImage1
+    LoadTextureImage("../../data/bunny.jpg");    // 2
+     LoadTextureImage("../../data/tiro.jpg");    // 3
+  
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulo******************************************
@@ -690,6 +692,7 @@ if (keyW) {
     
 
         //bunny
+
        model = Matrix_Translate(bunny_pos_x, bunny_pos_y, bunny_pos_z)
         * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f)
         * Matrix_Scale(2.0f, 2.0f, 2.0f);
