@@ -20,7 +20,7 @@ ESC - SAI DO JOGO
 
 COMPILAÇÃO
 
- No linuz para compilar vá até o diretório raiz do projeto, abra o terminal nesse diretório. Dê um "make" e um "make run". O jogo deve funcionar normalmente.
+ No linux para compilar vá até o diretório raiz do projeto, abra o terminal nesse diretório. Dê um "make" e um "make run". O jogo deve funcionar normalmente.
  Ainda vou fazer os testes no windows para que também funcione bem.
 
 ![Imagem X](x.png)
