@@ -255,6 +255,9 @@ GLuint g_NumLoadedTextures = 0;
 std::vector<Tiro> tiros; // lista de tiros ativos
 */
 
+
+/////FONTE 
+
 double last_mouse_x = 0.0;  // Última posição do mouse X
 bool first_mouse = true; 
 float batman_angulo = 0.0f; 
@@ -305,7 +308,7 @@ const float tempoLimiteColisao = 10.5f;   // 3 segundos de colisão para perder 
 
 int tirosAcertados = 0;
 const int tirosParaVencer = 10;                                                                                //TIROS PRA MATAR O BUNNY
-
+//FONTE
 //&&&&&&&&&&&&&&&&&&&&&BEZIER BEZIER BEZIER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 glm::vec4 bezier_p0(-25.0f, 8.0f,  0.0f, 1.0f);
 glm::vec4 bezier_p1(-12.0f, 13.0f, -16.0f, 1.0f);
@@ -330,9 +333,7 @@ float velocidade_orbita = 0.5f; // Quanto maior, mais rápido a lua gira
    }
 
 
-
-
-int voltas_lua = 0;
+int voltas_lua = 0;             //CONTADOR PRA VOLTAS NA LUA
 
 
 
@@ -411,7 +412,7 @@ int main(int argc, char* argv[])
    
     // Carregamos os shaders de vértices e de fragmentos que serão utilizados
     // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
-    //
+    //  FONTE PEL
     LoadShadersFromFiles();
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/bat.jpg");      // TextureImage0
@@ -422,9 +423,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/lua.jpg");    // TextureImage5
     LoadTextureImage("../../data/madeira.jpg");// TextureImage6
     
-
-
-
+  //FONTE TENTEI ADICIONAR BACKGROUND               
   /*// ISSO AQUI É PRA SER O BACKGROUND QUE FIQUE DE ADICIONAR DEPOIS DA APRESENTAÇÃO
   GLuint bgTextureID;
   LoadTextureImage("../../data/sky.jpg"); //TextureImage7
@@ -480,6 +479,8 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+    
+    //FONTE POSIÇÇÕES DO COELHO E DO BATMAN
     Alvo alvoBatman = {batman_pos_x, batman_pos_y, batman_pos_z, raioBatman};
     Alvo alvoBunny = {bunny_pos_x, bunny_pos_y, bunny_pos_z, raioBunny};
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
@@ -552,7 +553,7 @@ glEnable(GL_DEPTH_TEST);
         */
         
         
-        
+        //BUNNY SE MOVE SEMPRE TENTANDO ACHAR O BATMAN  FONTEEEE
         alvoBunny.x = bunny_pos_x;
         alvoBunny.y = bunny_pos_y;
         alvoBunny.z = bunny_pos_z;
@@ -564,7 +565,7 @@ glEnable(GL_DEPTH_TEST);
         ultimoTempo = tempoAtual;
         
 // Atualize o tempo de teletransporte
-tempoDesdeUltimoTeleporte += 0.016f; // assume ~60FPS, ajuste se usar tempo real
+tempoDesdeUltimoTeleporte += 0.016f; // assume ~60FPS, ajuste se usar tempo real                 TEMPO DE TELETRANSPORTE
 
 if (tempoDesdeUltimoTeleporte >= intervaloTeleporte) {
     tempoDesdeUltimoTeleporte = 0.0f;
@@ -585,7 +586,7 @@ glfwSetCursorPosCallback(window, CursorPosCallback);
 
 
 
-// Declara só uma vez:
+// FONTE        T
     float velocidade = 0.1f;            
     float angulo_rad = glm::radians(batman_angulo + 90.0f);
 
@@ -624,6 +625,8 @@ glfwSetCursorPosCallback(window, CursorPosCallback);
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
         // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
         // e ScrollCallback().
+        
+        //FONTE CÓDIGO CAMERA
     float distancia_camera = 1.6f;
     float altura_camera = 2.0f;  // Mais alto = vê mais do cenário
     float altura_olhar = 1.8;   // Olhar mais para cima
@@ -701,7 +704,7 @@ glfwSetCursorPosCallback(window, CursorPosCallback);
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 //###############################################################################################################  LÓGICA DE COLISÃO ABAIXO
-      // LÓGICA DE COLISÃO ENTRE BUNNY E BATMAN
+      // LÓGICA DE COLISÃO ENTRE BUNNY E BATMAN  FONTE 
     if (jogoAtivo) {
         alvoBatman.x = batman_pos_x;
         alvoBatman.y = batman_pos_y;
@@ -761,7 +764,7 @@ glfwSetCursorPosCallback(window, CursorPosCallback);
   }
 }
 
-    // Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas
+    // Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas         FONTE
     // E que 'tiro' tenha campos x,y,z, dx,dz, speed, tempoVivo e ativo
     // COLISÃO DO TIRO
     for (auto& tiro : tiros) {
@@ -810,7 +813,7 @@ glfwSetCursorPosCallback(window, CursorPosCallback);
     }
     
     
-    // loop da lua ---
+    // loop da lua --- FONTE
 
  
  
@@ -833,8 +836,8 @@ if (lua_ativa) {
     
 
     
-
-        //bunny
+         // FONTE OBJETOS
+        //bunny   
 
        model = Matrix_Translate(bunny_pos_x, bunny_pos_y, bunny_pos_z)
         * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 2.0f)
@@ -1628,7 +1631,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
     if (g_CameraDistance < verysmallnumber)
         g_CameraDistance = verysmallnumber;
 }
-void DispararTiro()
+void DispararTiro()  //FONTE
 {
     Tiro novoTiro;
     float offset_frente = 0.5f;  // distância para frente do Batman
@@ -1673,8 +1676,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
 
 
-
-    // ======================
+      
+    // ====================== // FONTE CONTROLES DO JOGO
     // Não modifique este loop! Ele é utilizado para correção automatizada dos
     // laboratórios. Deve ser sempre o primeiro comando desta função KeyCallback().
     for (int i = 0; i < 10; ++i)
@@ -1687,7 +1690,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         glfwSetWindowShouldClose(window, GL_TRUE);
 
     float delta = 3.141592 / 16; // 22.5 graus, em radianos.
-    // Exemplo: rotacionar Batman com as teclas Q/E (ou seta esquerda/direita)
+    // Exemplo: rotacionar Batman com as teclas Q/E (ou seta esquerda/direita)      
   if (key == GLFW_KEY_Q) batman_angulo += 5.0f; // gira para a esquerda
   if (key == GLFW_KEY_E) batman_angulo -= 5.0f; // gira para a direita
 
