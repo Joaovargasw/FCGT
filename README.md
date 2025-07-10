@@ -1,3 +1,5 @@
+Trabalho da disciplina de Fundamentos de Computação Gráfica do primeiro semestre de 2025
+
 
 O desenvolvimento deste trabalho foi um verdadeiro desafio, mas também uma experiência muito satisfatória com um aprendizado maior pois o desenvolvimento do jogo foi sozinho. A disciplina é bastante interessante, pois pude aplicar na prática a maioria dos conceitos abordados em aula, como lógica de colisões e controlo de câmara e aplicação das texturas nos objetos, também trabalhei bastante com o blender para melhorar e facilitar a posição dos objetos no jogo.
 
