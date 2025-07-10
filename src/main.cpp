@@ -56,10 +56,11 @@
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
-        #define BAT     3
-        #define PLANEC  4
+        #define BAT    3
+        #define PLANEC 4
         #define TIRO   5
-        #define WALL_ID   6
+        #define PEAOM 6 
+        #define SKY    7
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -285,7 +286,7 @@ std::vector<Tiro> tiros;
 float tempoUltimoTeleport = 0.0f;  // para controle do tempo
 float distanciaAtual = 20.0f;      // distância inicial grande
 float tempoDesdeUltimoTeleporte = 0.0f;
-const float intervaloTeleporte = 1.5f; // 3 segundos setar pra 2 s aumentei pra arrumar o shader                                       VELOCIDADE DE TELEPORTE
+const float intervaloTeleporte = 8.5f; // 3 segundos setar pra 2 s aumentei pra arrumar o shader                                       VELOCIDADE DE TELEPORTE
 float distanciaInicial = 150.0f;  // distância inicial longe do Batman a cada teletransporte diminuo a distancia do batman
 
 const float distanciaReduzidaPorTeleport = 1.0f; //                                                                          QUANTO DIMINUI A CADA TELETRANSPORTE
@@ -300,7 +301,7 @@ void PosicionarBunnyDistante(float batman_x, float batman_z, float distancia) {
 
 bool jogoAtivo = true;
 float tempoColisaoCont = 0.0f;           // Contador de tempo de colisão
-const float tempoLimiteColisao = 0.5f;   // 3 segundos de colisão para perder                                  PERSONAGEM MORRE SE PASSAR DESSE TEMPO DE COLISÃO BATMAN MORTO / TEMPO DE COLISÃO.
+const float tempoLimiteColisao = 10.5f;   // 3 segundos de colisão para perder                                  PERSONAGEM MORRE SE PASSAR DESSE TEMPO DE COLISÃO BATMAN MORTO / TEMPO DE COLISÃO.
 
 int tirosAcertados = 0;
 const int tirosParaVencer = 10;                                                                                //TIROS PRA MATAR O BUNNY
@@ -417,8 +418,19 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/planec.jpg"); // TextureImage1
     LoadTextureImage("../../data/bunny.jpg");    // TextureImage2
     LoadTextureImage("../../data/tiro.jpg");    // TextureImage3
-    LoadTextureImage("../../data/tiro2.jpg");    // TextureImage14
+    LoadTextureImage("../../data/tiro2.jpg");    // TextureImage4
     LoadTextureImage("../../data/lua.jpg");    // TextureImage5
+    LoadTextureImage("../../data/madeira.jpg");// TextureImage6
+    
+
+
+
+  /*// ISSO AQUI É PRA SER O BACKGROUND QUE FIQUE DE ADICIONAR DEPOIS DA APRESENTAÇÃO
+  GLuint bgTextureID;
+  LoadTextureImage("../../data/sky.jpg"); //TextureImage7
+  bgTextureID = g_NumLoadedTextures - 1; */
+
+    
   
 
 
@@ -444,9 +456,13 @@ int main(int argc, char* argv[])
     ComputeNormals(&tiromodel);
     BuildTrianglesAndAddToVirtualScene(&tiromodel);
     
-  ObjModel alienModel("../../data/alien.obj");
-   ComputeNormals(&alienModel);
-  BuildTrianglesAndAddToVirtualScene(&alienModel);
+    ObjModel peaommodel("../../data/peaom.obj");
+    ComputeNormals(&peaommodel);
+    BuildTrianglesAndAddToVirtualScene(&peaommodel);
+    
+   /* ObjModel skyModel("../../data/sky.obj");
+    ComputeNormals(&skyModel);
+    BuildTrianglesAndAddToVirtualScene(&skyModel);*/
 
     if ( argc > 1 )
     {
@@ -469,12 +485,38 @@ int main(int argc, char* argv[])
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     float ultimoTempo = (float)glfwGetTime();
     PosicionarBunnyDistante(batman_pos_x, batman_pos_z, distanciaAtual);
-  
+    float quadVertices[] = {
+    // positions    // texCoords
+    -1.0f,  1.0f,   0.0f, 1.0f,
+    -1.0f, -1.0f,   0.0f, 0.0f,
+     1.0f, -1.0f,   1.0f, 0.0f,
+    -1.0f,  1.0f,   0.0f, 1.0f,
+     1.0f, -1.0f,   1.0f, 0.0f,
+     1.0f,  1.0f,   1.0f, 1.0f
+};
+  GLuint bgVAO, bgVBO;
+  glGenVertexArrays(1, &bgVAO);
+  glGenBuffers(1, &bgVBO);
+  glBindVertexArray(bgVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, bgVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+  glBindVertexArray(0);
 
-    while (!glfwWindowShouldClose(window)) //################################################################################################################################
+  GLuint bgShaderProgram;
+  /*                                                                                                     PRA ADICIONAR BACKGROUND
+  GLuint bgVertexShader = LoadShader_Vertex("../../src/background_vertex.glsl");
+  GLuint bgFragShader = LoadShader_Fragment("../../src/background_fragment.glsl");
+  bgShaderProgram = CreateGpuProgram(bgVertexShader, bgFragShader);*/
+
+
+    while (!glfwWindowShouldClose(window)) //################################################LOOP PRINCIPAL LOOP PRINCIPAL LOOP PRINCIPAL
     {
   
-
+        
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -483,12 +525,40 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        glClearColor(0.09f, 0.19f, 0.45f, 1.0f);//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        glClearColor(0.09f, 0.19f, 0.45f, 1.0f);
+        
+       /* // Desliga depth test para o background //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$TENTANDO BRACKGROUND$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+glDisable(GL_DEPTH_TEST);
+
+// Usa o shader do background
+glUseProgram(bgShaderProgram);
+
+// Usa o VAO do quad
+glBindVertexArray(bgVAO);
+
+// BACKGROUND      
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, bgTextureID);
+glUniform1i(glGetUniformLocation(bgShaderProgram, "backgroundTexture"), 7);
+
+glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
+glEnable(GL_DEPTH_TEST);
+
+
+
+        
+        */
+        
+        
+        
         alvoBunny.x = bunny_pos_x;
         alvoBunny.y = bunny_pos_y;
         alvoBunny.z = bunny_pos_z;
         alvoBunny.raio = bunnyRaio;
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++DELTATIME+++++++++++++++++++++++++++++++
+        
         float tempoAtual = (float)glfwGetTime();
         float deltaTime = tempoAtual - ultimoTempo;
         ultimoTempo = tempoAtual;
@@ -514,9 +584,9 @@ if (tempoDesdeUltimoTeleporte >= intervaloTeleporte) {
 glfwSetCursorPosCallback(window, CursorPosCallback);
 
 
-glUniform1i(g_object_id_uniform, WALL_ID);
+
 // Declara só uma vez:
-    float velocidade = 0.1f;
+    float velocidade = 0.1f;            
     float angulo_rad = glm::radians(batman_angulo + 90.0f);
 
     // Vira para a frente (w sempre para a frente do Batman, s para trás)
@@ -630,8 +700,8 @@ glUniform1i(g_object_id_uniform, WALL_ID);
         // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
-//###############################################################################################################
-      // Lógica de colisão entre bunny e batman
+//###############################################################################################################  LÓGICA DE COLISÃO ABAIXO
+      // LÓGICA DE COLISÃO ENTRE BUNNY E BATMAN
     if (jogoAtivo) {
         alvoBatman.x = batman_pos_x;
         alvoBatman.y = batman_pos_y;
@@ -688,12 +758,12 @@ glUniform1i(g_object_id_uniform, WALL_ID);
         glfwSetWindowShouldClose(window, GL_TRUE);
        
     }
-}
+  }
 }
 
-// Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas
-// E que 'tiro' tenha campos x,y,z, dx,dz, speed, tempoVivo e ativo
-// colisão do tiro
+    // Supondo que você tenha a struct Alvo e a variável alvoBunny declaradas e atualizadas
+    // E que 'tiro' tenha campos x,y,z, dx,dz, speed, tempoVivo e ativo
+    // COLISÃO DO TIRO
     for (auto& tiro : tiros) {
        if (!tiro.ativo) continue;
 
@@ -719,11 +789,11 @@ glUniform1i(g_object_id_uniform, WALL_ID);
     if (sphereIntersectsCube(centroTiro, raioTiro, centroAlvo, raioAlvo)) {
         tiro.ativo = false;
         tirosAcertados++;
-        printf("Tiro colidiu com o Bunny!\n");
+        printf("Tiro colidiu com o Bunny!\n"); // APENAS LOG PRA DEBBUG
         
         if (tirosAcertados >= tirosParaVencer) {
             jogoAtivo = false;
-            printf("Parabéns! Você venceu acertando %d tiros no Bunny!\n", tirosParaVencer);
+            printf("Parabéns! Você venceu acertando %d tiros no Bunny!\n", tirosParaVencer);    // QUANDO GANHO O JOGO DEPOIS DE X TIROS
             glfwSetWindowShouldClose(window, GL_TRUE);
             
             // Aqui pode adicionar lógica para terminar o jogo (ex: sair do loop, mostrar tela, etc)
@@ -783,20 +853,56 @@ if (lua_ativa) {
         DrawVirtualObject("bat");
         
         //PLANO
-        model = Matrix_Translate(0.0f, -3.0f, 0.0f)
+       model = Matrix_Translate(0.0f, -3.0f, 0.0f)
       * Matrix_Scale(20.0f, 1.0f, 20.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
          glUniform1i(g_object_id_uniform, PLANEC); // Usa o ID correto para o chão
          DrawVirtualObject("Plane_Material");
-        alien_pos_x = batman_pos_x + dx * distancia_frente;
-
-
-
-      
-
-
-    
         
+        
+        //IMPLEMENTANDO PEÃO     x, y, z
+         model = Matrix_Translate(25.0f, -3.0f, -25.0f)
+        * Matrix_Scale(0.8f, 0.8f, 0.8f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PEAOM);
+        DrawVirtualObject("peaom");
+        
+         //IMPLEMENTANDO PEÃO     x, y, z
+         model = Matrix_Translate(-25.0f, -3.0f, 25.0f)
+        * Matrix_Scale(0.8f, 0.8f, 0.8f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PEAOM);
+        DrawVirtualObject("peaom");
+        
+         //IMPLEMENTANDO PEÃO     x, y, z
+         model = Matrix_Translate(25.0f, -3.0f, 25.0f)
+        * Matrix_Scale(0.8f, 0.8f, 0.8f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PEAOM);
+        DrawVirtualObject("peaom");
+        
+         //IMPLEMENTANDO PEÃO     x, y, z
+         model = Matrix_Translate(-25.0f, -3.0f, -25.0f)
+        * Matrix_Scale(0.8f, 0.8f, 0.8f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PEAOM);
+        DrawVirtualObject("peaom");
+ 
+        
+        /*
+         glDisable(GL_DEPTH_TEST);
+         glCullFace(GL_FRONT);
+         
+        // SKY
+          model = Matrix_Translate(0.0f,0.0f,0.0f)
+                    * Matrix_Scale(100.0f,-20.0f,100.0f);
+                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(g_object_id_uniform, SKY);
+                DrawVirtualObject("the_sky");
+          glCullFace(GL_BACK);
+          glEnable(GL_DEPTH_TEST);*/
+        
+        // PEÃO 
         
         
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
