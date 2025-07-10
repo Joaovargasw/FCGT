@@ -11,6 +11,14 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform int shading_model; // 0 = Gouraud, 1 = Phong
+uniform vec4 light_position_world;
+uniform vec3 light_intensity;
+uniform vec3 Ks;
+uniform float shininess;
+uniform vec4 view_position_world; // posição da câmera
+
+
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
 // para cada fragmento, os quais serão recebidos como entrada pelo Fragment
@@ -19,6 +27,8 @@ out vec4 position_world;
 out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
+out vec3 gouraud_color; // interpolada para o fragment shader
+
 
 void main()
 {
@@ -63,5 +73,21 @@ void main()
 
     // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
     texcoords = texture_coefficients;
+    // Calcula Gouraud lighting (interpolada para fragment shader)
+    vec3 N = normalize(normal.xyz);
+    vec3 L = normalize(light_position_world.xyz - position_world.xyz);
+    vec3 V = normalize(view_position_world.xyz - position_world.xyz);
+    vec3 H = normalize(L + V);
+
+    float diff = max(dot(N, L), 0.0);
+    float spec = 0.0;
+    if (diff > 0.0)
+        spec = pow(max(dot(N, H), 0.0), shininess);
+
+    vec3 ambient = 0.2 * light_intensity;
+    vec3 diffuse = diff * light_intensity;
+    vec3 specular = spec * Ks;
+
+    gouraud_color = ambient + diffuse + specular;
 }
 
