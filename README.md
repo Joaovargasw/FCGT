@@ -1,9 +1,9 @@
 Trabalho da disciplina de Fundamentos de Computação Gráfica do primeiro semestre de 2025
 
 
-O desenvolvimento deste trabalho foi um verdadeiro desafio, mas também uma experiência muito satisfatória com um aprendizado maior pois o desenvolvimento do jogo foi sozinho. A disciplina é bastante interessante, pois pude aplicar na prática a maioria dos conceitos abordados em aula, como lógica de colisões e controlo de câmara e aplicação das texturas nos objetos, também trabalhei bastante com o blender para melhorar e facilitar a posição dos objetos no jogo.
+O desenvolvimento deste trabalho foi um verdadeiro desafio, mas também uma experiência muito satisfatória com um aprendizado maior pois o desenvolvimento do jogo foi sozinho. A disciplina é bastante interessante, pois pude aplicar na prática a maioria dos conceitos abordados em aula, como lógica de colisões e controle de câmara e aplicação das texturas nos objetos, também trabalhei bastante com o blender para melhorar e facilitar a posição dos objetos no jogo.
 
-Utilizei o ChatGPT e DeepSeek tanto para ajudar na resolução de bugs como para aperfeiçoar algumas lógicas do jogo, principalmente a de colisões , o que tornou o processo mais eficiente e produtivo.
+Utilizei o ChatGPT e DeepSeek tanto para ajudar na resolução de bugs como para aperfeiçoar algumas lógicas do jogo, principalmente a de colisões, o que tornou o processo mais eficiente e produtivo.
 
 A jogabilidade ficou bastante intuitiva e dinâmica. O movimento do personagem é controlado pelas teclas WSAD. As teclas Q e E possibilitam a rotação do personagem, e a barra de espaço serve para disparar. Este esquema de controlos torna a experiência do utilizador mais envolvente. O coelho se teletransporta a cada x segundos e se encostar tantos segundos no batman o personagem morre ou tenho que acertar y tiros pra matar o coelho.
 
