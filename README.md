@@ -1,7 +1,7 @@
 Trabalho da disciplina de Fundamentos de Computação Gráfica do primeiro semestre de 2025
 
 
-O desenvolvimento deste trabalho foi um verdadeiro desafio, mas também uma experiência muito satisfatória com um aprendizado maior, pois desenvolvi o projeto de forma independente. A disciplina é bastante interessante, pois pude aplicar na prática a maioria dos conceitos abordados em aula, como lógica de colisões, controle de câmara, aplicação das texturas nos objetos e modelos de iluminação Difusa e Blin-Phong também trabalhei bastante com o blender para melhorar os arquivos .obj e facilitar a posição dos objetos no jogo.
+O desenvolvimento deste trabalho foi um verdadeiro desafio, mas também uma experiência muito satisfatória e com grande aprendizado, pois desenvolvi o projeto de forma independente utilizando OpenGL. A disciplina mostrou-se bastante interessante, já que pude aplicar na prática a maioria dos conceitos abordados em aula, como lógica de colisões, controle de câmera, aplicação de texturas em objetos e implementação de modelos de iluminação (Difusa e Blinn-Phong). Além disso, trabalhei intensamente com o Blender para arquivos .obj, ajustar suas geometrias e facilitar o posicionamento dos objetos no jogo.
 
 Utilizei o ChatGPT e DeepSeek tanto para ajudar na resolução de bugs como para aperfeiçoar algumas lógicas do jogo, principalmente a de colisões, o que tornou o processo mais eficiente e produtivo.
 
