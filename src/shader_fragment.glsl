@@ -19,12 +19,16 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
+
 #define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
 #define BAT    3
 #define PLANEC 4
 #define TIRO  5
+#define PEAOM 6
+#define SKY 7
+
 uniform int object_id;
 uniform int shading_model;
 
@@ -39,6 +43,8 @@ uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
 uniform sampler2D TextureImage5;
+uniform sampler2D TextureImage6;
+
 
 //Lambert + Blinn-Phong  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%MARCAÇÃO SHADER BLINN - PHONG
 uniform vec4 light_position_world;
@@ -148,7 +154,7 @@ void main()
 }
 
 
-    else if ( object_id == PLANE )
+   else if ( object_id == PLANE )
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
         U = texcoords.x;
@@ -228,11 +234,51 @@ if (object_id == BAT) {
     color.a = 1.0;
     return;
 }
+if (object_id == PEAOM) {
+    // Cor cinza escuro (R=0.2, G=0.2, B=0.2)
+    vec3 object_color = vec3(0.2, 0.2, 0.2);
 
+    // Vetores para iluminação
+    vec3 N = normalize(normal.xyz);                          // Normal
+    vec3 L = normalize(light_position_world.xyz - position_world.xyz); // Direção da luz
+    vec3 V = normalize(view_position_world.xyz - position_world.xyz);  // Direção da câmera
+    vec3 H = normalize(L + V);                               // Vetor "halfway" (Blinn-Phong)
 
-   else {
+    // Componentes de iluminação
+    float ambient = 0.1;                                     // Luz ambiente mínima
+    float diffuse = max(dot(N, L), 0.0);                     // Iluminação difusa
+    float specular = pow(max(dot(N, H), 0.0), shininess);    // Brilho especular
+
+    // Combinação final
+    color.rgb = (ambient + diffuse) * object_color + specular * vec3(0.5); // Brilho branco suave
+    color.a = 1.0; // Opacidade total
+    return;
+}else {
     Kd0 = vec3(0.7, 0.7, 0.7); // cor neutra se faltar textura
-   }
+   } 
+
+//                                                                                    LOGO ABAIXO HAVERÁ O BACKGROUND QUE FALEI QUE TENTARIA NA APRESENTAÇÃO  
+/*
+if (object_id == SKY)
+{
+     // Cálculo UV esférico
+    vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+    vec4 p = position_model - bbox_center;
+    float radius = max(length(p), 0.0001);
+    float theta = atan(p.z, p.x);
+    float phi   = asin(p.y / radius);
+
+    float U = (theta + M_PI) / (2.0 * M_PI);
+    float V = (phi + (M_PI/2.0)) / M_PI;
+
+    vec3 sky_color = texture(TextureImage7, vec2(U, V)).rgb;
+    color = vec4(sky_color, 1.0);
+    return; 
+}*/
+
+
+
+   
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
