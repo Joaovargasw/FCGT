@@ -36,7 +36,7 @@ uniform int shading_model;
 uniform vec4 bbox_min;
 uniform vec4 bbox_max;
 
-// Variáveis para acesso das imagens de textura
+// Variáveis para acesso das imagens de textura  FONTE BASICAMENTE SHADER FOI MUDADO COMPLETO
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
